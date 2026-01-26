@@ -12,7 +12,13 @@ export async function GET(request: Request) {
 
     try {
         const result = await db.execute({
-            sql: 'SELECT * FROM comments WHERE task_id = ? ORDER BY created_at ASC',
+            sql: `
+                SELECT c.*, u.username 
+                FROM comments c 
+                LEFT JOIN users u ON c.user_id = u.id 
+                WHERE c.task_id = ? 
+                ORDER BY c.created_at ASC
+            `,
             args: [task_id],
         });
         return NextResponse.json(result.rows);
@@ -24,19 +30,28 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     try {
-        const { task_id, content, type, media_data } = await request.json();
+        const { task_id, user_id, content, type, media_data } = await request.json();
 
-        if (!task_id || !type) {
+        if (!task_id || !user_id || !type) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
         const id = uuidv4();
+        const created_at = new Date().toISOString();
+
         await db.execute({
-            sql: 'INSERT INTO comments (id, task_id, content, type, media_data) VALUES (?, ?, ?, ?, ?)',
-            args: [id, task_id, content || '', type, media_data || null],
+            sql: 'INSERT INTO comments (id, task_id, user_id, content, type, media_data, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            args: [id, task_id, user_id, content || '', type, media_data || null, created_at],
         });
 
-        return NextResponse.json({ id, task_id, content, type, media_data });
+        // Get username for the response
+        const userRes = await db.execute({
+            sql: 'SELECT username FROM users WHERE id = ?',
+            args: [user_id]
+        });
+        const username = userRes.rows[0]?.username || 'User';
+
+        return NextResponse.json({ id, task_id, user_id, username, content, type, media_data, created_at });
     } catch (error) {
         console.error('Error creating comment:', error);
         return NextResponse.json({ error: 'Failed to create comment' }, { status: 500 });

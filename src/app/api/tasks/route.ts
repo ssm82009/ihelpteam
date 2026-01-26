@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { v4 as uuidv4 } from 'uuid';
+import { sendTaskNotification } from '@/lib/mail';
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
@@ -12,7 +13,14 @@ export async function GET(request: Request) {
 
     try {
         const result = await db.execute({
-            sql: 'SELECT * FROM tasks WHERE team_id = ? ORDER BY created_at DESC',
+            sql: `
+                SELECT t.*, COUNT(c.id) as comment_count 
+                FROM tasks t 
+                LEFT JOIN comments c ON t.id = c.task_id 
+                WHERE t.team_id = ? 
+                GROUP BY t.id 
+                ORDER BY t.created_at DESC
+            `,
             args: [team_id],
         });
         return NextResponse.json(result.rows);
@@ -36,6 +44,11 @@ export async function POST(request: Request) {
             sql: 'INSERT INTO tasks (id, title, status, image_data, team_id) VALUES (?, ?, ?, ?, ?)',
             args: [id, title, status, image_data || null, team_id],
         });
+
+        // Notify team (Demo: notify the support email)
+        if (process.env.SMTP_USER) {
+            sendTaskNotification(process.env.SMTP_USER, title, status, "فريق العمل");
+        }
 
         return NextResponse.json({ id, title, status, image_data, team_id });
     } catch (error) {

@@ -6,6 +6,18 @@ export interface Team {
     name: string;
     description: string;
     secret_code: string;
+    admin_id?: string;
+    title_plan?: string;
+    title_execution?: string;
+    title_completed?: string;
+    title_review?: string;
+}
+
+export interface User {
+    id: string;
+    username: string;
+    email: string;
+    team_id: string;
 }
 
 export interface Task {
@@ -15,6 +27,7 @@ export interface Task {
     image_data?: string;
     team_id: string;
     created_at?: string;
+    comment_count?: number;
 }
 
 export interface Comment {
@@ -28,19 +41,24 @@ export interface Comment {
 
 interface AppState {
     team: Team | null;
+    currentUser: User | null;
     setTeam: (team: Team | null) => void;
+    setCurrentUser: (user: User | null) => void;
 
     tasks: Task[];
     setTasks: (tasks: Task[]) => void;
     addTask: (task: Task) => void;
     updateTask: (id: string, updates: Partial<Task>) => void;
+    logout: () => void;
 }
 
 export const useStore = create<AppState>()(
     persist(
         (set) => ({
             team: null,
+            currentUser: null,
             setTeam: (team) => set({ team }),
+            setCurrentUser: (user) => set({ currentUser: user }),
 
             tasks: [],
             setTasks: (tasks) => set({ tasks }),
@@ -48,6 +66,7 @@ export const useStore = create<AppState>()(
             updateTask: (id, updates) => set((state) => ({
                 tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...updates } : t)),
             })),
+            logout: () => set({ team: null, currentUser: null, tasks: [] }),
         }),
         {
             name: 'team-assistant-storage',

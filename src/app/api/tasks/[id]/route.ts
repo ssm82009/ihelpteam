@@ -40,3 +40,25 @@ export async function PUT(request: Request, { params }: { params: { id: string }
         return NextResponse.json({ error: 'Failed to update task' }, { status: 500 });
     }
 }
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+    const { id } = params;
+
+    try {
+        // 1. Delete comments first
+        await db.execute({
+            sql: 'DELETE FROM comments WHERE task_id = ?',
+            args: [id],
+        });
+
+        // 2. Delete task
+        await db.execute({
+            sql: 'DELETE FROM tasks WHERE id = ?',
+            args: [id],
+        });
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting task:', error);
+        return NextResponse.json({ error: 'Failed to delete task' }, { status: 500 });
+    }
+}

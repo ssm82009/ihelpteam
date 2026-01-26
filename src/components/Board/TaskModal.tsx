@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Task, useStore } from '@/lib/store';
-import { X, Image as ImageIcon, Send, Clock, Play, Pause } from 'lucide-react';
+import { X, Image as ImageIcon, Send, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import VoiceRecorder from './VoiceRecorder';
 
@@ -16,6 +16,8 @@ interface TaskModalProps {
 interface Comment {
     id: string;
     task_id: string;
+    user_id: string;
+    username: string;
     content: string;
     type: 'text' | 'image' | 'voice';
     media_data?: string;
@@ -23,23 +25,28 @@ interface Comment {
 }
 
 export default function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
-    const { updateTask } = useStore();
+    const { updateTask, currentUser, team, setTasks, tasks } = useStore();
     const [title, setTitle] = useState(task.title);
     const [status, setStatus] = useState(task.status);
     const [comments, setComments] = useState<Comment[]>([]);
     const [newComment, setNewComment] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
-    // Image handling
+    const isAdmin = !!currentUser?.id && !!team?.admin_id && currentUser.id === team.admin_id;
+
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (isOpen) {
             fetchComments();
+            setTitle(task.title);
+            setStatus(task.status);
         }
-    }, [isOpen, task.id]);
+    }, [isOpen, task.id, task.title, task.status]);
 
     const fetchComments = async () => {
+        setIsLoading(true);
         try {
             const res = await fetch(`/api/comments?task_id=${task.id}`);
             if (res.ok) {
@@ -48,11 +55,13 @@ export default function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
             }
         } catch (e) {
             console.error(e);
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const saveTitle = async () => {
-        if (title === task.title) return;
+        if (!isAdmin || title === task.title) return;
         updateTask(task.id, { title });
         try {
             await fetch(`/api/tasks/${task.id}`, {
@@ -65,7 +74,26 @@ export default function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
         }
     };
 
+    const handleDeleteTask = async () => {
+        if (!isAdmin) return;
+        if (!confirm('هل أنت متأكد من حذف هذه المهمة نهائياً؟')) return;
+        setIsDeleting(true);
+        try {
+            const res = await fetch(`/api/tasks/${task.id}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Failed');
+
+            setTasks(tasks.filter(t => t.id !== task.id));
+            toast.success('تم حذف المهمة');
+            onClose();
+        } catch (e) {
+            toast.error('فشل حذف المهمة');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     const handleStatusChange = async (newStatus: Task['status']) => {
+        if (!isAdmin) return;
         setStatus(newStatus);
         updateTask(task.id, { status: newStatus });
         try {
@@ -81,17 +109,20 @@ export default function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
 
     const handleSendComment = async (type: 'text' | 'image' | 'voice', content: string = '', mediaData: string | null = null) => {
         if (!content && !mediaData) return;
+        if (!currentUser) return;
 
         const optimisticComment: Comment = {
             id: 'temp-' + Date.now(),
             task_id: task.id,
+            user_id: currentUser.id,
+            username: currentUser.username,
             content,
             type,
             media_data: mediaData || undefined,
             created_at: new Date().toISOString()
         };
 
-        setComments([...comments, optimisticComment]);
+        setComments(prev => [...prev, optimisticComment]);
         setNewComment('');
 
         try {
@@ -100,6 +131,7 @@ export default function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     task_id: task.id,
+                    user_id: currentUser.id,
                     content,
                     type,
                     media_data: mediaData
@@ -108,7 +140,6 @@ export default function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
 
             if (!res.ok) throw new Error('Failed');
             const savedComment = await res.json();
-            // replace optimistic
             setComments(prev => prev.map(c => c.id === optimisticComment.id ? savedComment : c));
         } catch (e) {
             toast.error('فشل إرسال التعليق');
@@ -126,6 +157,15 @@ export default function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
             };
             reader.readAsDataURL(file);
         }
+    };
+
+    const getAvatarColor = (name: string) => {
+        const colors = ['bg-blue-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-emerald-500', 'bg-orange-500'];
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+            hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        return colors[Math.abs(hash) % colors.length];
     };
 
     if (!isOpen) return null;
@@ -147,27 +187,42 @@ export default function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             onBlur={saveTitle}
-                            className="text-xl font-bold bg-transparent outline-none w-full text-gray-800"
+                            readOnly={!isAdmin}
+                            className={`text-xl font-bold bg-transparent outline-none w-full text-gray-800 ${!isAdmin ? 'cursor-default' : ''}`}
                             placeholder="عنوان المهمة"
                         />
-                        <div className="flex gap-2 mt-2">
-                            {(['Plan', 'Execution', 'Completed', 'Review'] as const).map((s) => (
-                                <button
-                                    key={s}
-                                    onClick={() => handleStatusChange(s)}
-                                    className={`text-xs px-2 py-1 rounded-full border transition-colors ${status === s
+                        {isAdmin && (
+                            <div className="flex gap-2 mt-2">
+                                {(['Plan', 'Execution', 'Completed', 'Review'] as const).map((s) => (
+                                    <button
+                                        key={s}
+                                        onClick={() => handleStatusChange(s)}
+                                        className={`text-xs px-2 py-1 rounded-full border transition-colors ${status === s
                                             ? 'bg-blue-600 text-white border-blue-600'
                                             : 'bg-transparent text-gray-500 border-gray-200 hover:border-blue-300'
-                                        }`}
-                                >
-                                    {s === 'Plan' ? 'الخطة' : s === 'Execution' ? 'التنفيذ' : s === 'Completed' ? 'مكتمل' : 'مراجعة'}
-                                </button>
-                            ))}
-                        </div>
+                                            }`}
+                                    >
+                                        {s === 'Plan' ? 'الخطة' : s === 'Execution' ? 'التنفيذ' : s === 'Completed' ? 'مكتمل' : 'مراجعة'}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
-                        <X size={20} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {isAdmin && (
+                            <button
+                                onClick={handleDeleteTask}
+                                disabled={isDeleting}
+                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+                                title="حذف المهمة"
+                            >
+                                <Trash2 size={20} />
+                            </button>
+                        )}
+                        <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
+                            <X size={20} />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
@@ -178,32 +233,48 @@ export default function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
                     )}
 
                     <div>
-                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">التعليقات والنشاط</h3>
-                        <div className="space-y-4">
+                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 text-right">التعليقات والنشاط</h3>
+                        <div className="space-y-6">
                             {comments.map((comment) => (
-                                <div key={comment.id} className={`flex gap-3 ${comment.type === 'voice' ? 'items-center' : 'items-start'}`}>
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-400 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                                        U
+                                <div key={comment.id} className={`flex gap-3 ${comment.user_id === currentUser?.id ? 'flex-row-reverse' : 'flex-row'}`}>
+                                    <div className={`w-8 h-8 rounded-full ${getAvatarColor(comment.username || '؟')} flex items-center justify-center text-white text-[10px] font-black shrink-0 shadow-sm ring-2 ring-white`}>
+                                        {(comment.username || '؟').charAt(0).toUpperCase()}
                                     </div>
-                                    <div className="flex-1 bg-white/60 p-3 rounded-2xl rounded-tr-none border border-gray-100 shadow-sm">
-                                        {comment.type === 'text' && (
-                                            <p className="text-sm text-gray-800">{comment.content}</p>
-                                        )}
-                                        {comment.type === 'image' && comment.media_data && (
-                                            <img src={comment.media_data} alt="uploaded" className="rounded-lg max-h-48 object-cover" />
-                                        )}
-                                        {comment.type === 'voice' && comment.media_data && (
-                                            <audio controls src={comment.media_data} className="h-8 w-full max-w-[200px]" />
-                                        )}
-                                        <span className="text-[10px] text-gray-400 mt-1 block">
-                                            {comment.created_at ? new Date(comment.created_at).toLocaleTimeString('ar-SA') : 'الآن'}
-                                        </span>
+                                    <div className={`flex flex-col max-w-[80%] ${comment.user_id === currentUser?.id ? 'items-end' : 'items-start'}`}>
+                                        <span className="text-[10px] font-bold text-gray-500 mb-1 px-1">{comment.username || 'عضو سابق'}</span>
+                                        <div className={`p-3 rounded-2xl border shadow-sm ${comment.user_id === currentUser?.id
+                                            ? 'bg-blue-600 text-white border-blue-500 rounded-tr-none text-right'
+                                            : 'bg-white text-gray-800 border-gray-100 rounded-tl-none text-right'
+                                            }`}>
+                                            {comment.type === 'text' && (
+                                                <p className="text-sm whitespace-pre-wrap">{comment.content}</p>
+                                            )}
+                                            {comment.type === 'image' && comment.media_data && (
+                                                <img src={comment.media_data} alt="uploaded" className="rounded-lg max-h-64 object-cover cursor-pointer hover:opacity-90 transition-opacity" onClick={() => window.open(comment.media_data)} />
+                                            )}
+                                            {comment.type === 'voice' && comment.media_data && (
+                                                <audio controls src={comment.media_data} className={`h-8 w-full min-w-[200px] ${comment.user_id === currentUser?.id ? 'invert' : ''}`} />
+                                            )}
+                                            <span className={`text-[9px] mt-1.5 block opacity-60 font-medium ${comment.user_id === currentUser?.id ? 'text-white text-left' : 'text-gray-400 text-left'}`}>
+                                                {comment.created_at ? new Date(comment.created_at).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }) : 'الآن'}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
-                            {comments.length === 0 && (
+                            {comments.length === 0 && !isLoading && (
                                 <div className="text-center py-8 text-gray-400 text-sm">
                                     لا توجد تعليقات بعد. كن أول من يعلق!
+                                </div>
+                            )}
+                            {isLoading && comments.length === 0 && (
+                                <div className="space-y-4">
+                                    {[1, 2, 3].map(i => (
+                                        <div key={i} className="flex gap-3 animate-pulse">
+                                            <div className="w-8 h-8 bg-gray-100 rounded-full" />
+                                            <div className="h-16 bg-gray-50 rounded-2xl flex-1" />
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </div>
@@ -232,7 +303,7 @@ export default function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
                             value={newComment}
                             onChange={(e) => setNewComment(e.target.value)}
                             placeholder="اكتب تعليقاً..."
-                            className="flex-1 bg-transparent outline-none text-sm resize-none py-2 max-h-24"
+                            className="flex-1 bg-transparent outline-none text-sm resize-none py-2 max-h-24 text-right"
                             rows={1}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' && !e.shiftKey) {

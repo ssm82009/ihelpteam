@@ -8,25 +8,14 @@ import TaskModal from './TaskModal';
 import { Plus } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-const COLUMNS = [
-    { id: 'Plan', title: 'الخطة', color: 'bg-blue-50' },
-    { id: 'Execution', title: 'التنفيذ', color: 'bg-yellow-50' },
-    { id: 'Completed', title: 'مكتمل', color: 'bg-green-50' },
-    { id: 'Review', title: 'مراجعة', color: 'bg-purple-50' },
-] as const;
 
 export default function Board() {
-    const { team, tasks, setTasks, updateTask, addTask } = useStore();
+    const { team, tasks, setTasks, updateTask, addTask, currentUser, setTeam } = useStore();
     const [isClient, setIsClient] = useState(false);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    useEffect(() => {
-        setIsClient(true);
-        if (team?.id) {
-            fetchTasks();
-        }
-    }, [team?.id]);
+    const isAdmin = !!currentUser?.id && !!team?.admin_id && currentUser.id === team.admin_id;
 
     const fetchTasks = async () => {
         try {
@@ -41,7 +30,34 @@ export default function Board() {
         }
     };
 
+    const fetchTeamInfo = async () => {
+        try {
+            if (!team?.id) return;
+            const res = await fetch(`/api/teams/info?id=${team.id}`);
+            if (res.ok) {
+                const refreshedTeam = await res.json();
+                if (refreshedTeam.admin_id !== team.admin_id) {
+                    setTeam(refreshedTeam);
+                }
+            }
+        } catch (e) {
+            console.error('Failed to refresh team info', e);
+        }
+    };
+
+    useEffect(() => {
+        setIsClient(true);
+        if (team?.id) {
+            fetchTasks();
+            fetchTeamInfo();
+        }
+    }, [team?.id]);
+
     const onDragEnd = async (result: DropResult) => {
+        if (!isAdmin) {
+            toast.error('فقط منشئ الفريق يمكنه نقل المهام');
+            return;
+        }
         const { destination, source, draggableId } = result;
 
         if (!destination) return;
@@ -114,11 +130,48 @@ export default function Board() {
         setIsModalOpen(true);
     };
 
+    const COLUMNS = [
+        { id: 'Plan', title: team?.title_plan || 'الخطة', color: 'border-t-blue-400' },
+        { id: 'Execution', title: team?.title_execution || 'التنفيذ', color: 'border-t-yellow-400' },
+        { id: 'Completed', title: team?.title_completed || 'مكتمل', color: 'border-t-green-400' },
+        { id: 'Review', title: team?.title_review || 'مراجعة', color: 'border-t-purple-400' },
+    ] as const;
+
+    const handleUpdateColumnTitle = async (columnId: string, newTitle: string) => {
+        if (!isAdmin || !team?.id) return;
+
+        const fieldMap: Record<string, string> = {
+            'Plan': 'title_plan',
+            'Execution': 'title_execution',
+            'Completed': 'title_completed',
+            'Review': 'title_review'
+        };
+
+        const fieldName = fieldMap[columnId];
+        if (!fieldName) return;
+
+        // Optimistic Update
+        setTeam({ ...team, [fieldName]: newTitle });
+
+        try {
+            const res = await fetch('/api/teams/update', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: team.id, [fieldName]: newTitle })
+            });
+            if (!res.ok) throw new Error();
+            toast.success('تم تحديث عنوان العمود');
+        } catch (e) {
+            toast.error('فشل تحديث عنوان العمود');
+            fetchTeamInfo(); // Revert
+        }
+    };
+
     if (!isClient) {
         return (
             <div className="flex p-6 gap-6 h-[calc(100vh-80px)] overflow-x-auto">
-                {COLUMNS.map(col => (
-                    <div key={col.id} className="min-w-[300px] bg-gray-100/50 rounded-2xl animate-pulse"></div>
+                {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="min-w-[320px] bg-gray-100/50 rounded-2xl animate-pulse"></div>
                 ))}
             </div>
         );
@@ -137,6 +190,8 @@ export default function Board() {
                             tasks={tasks.filter((t) => t.status === column.id)}
                             onCreateTask={(title) => handleCreateTask(column.id as Task['status'], title)}
                             onTaskClick={openTask}
+                            isAdmin={isAdmin}
+                            onUpdateTitle={(newTitle) => handleUpdateColumnTitle(column.id, newTitle)}
                         />
                     ))}
                 </DragDropContext>
