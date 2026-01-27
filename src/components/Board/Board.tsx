@@ -111,7 +111,9 @@ export default function Board() {
                 body: JSON.stringify({
                     title,
                     status,
-                    team_id: team.id
+                    team_id: team.id,
+                    user_id: currentUser?.id,
+                    user_name: currentUser?.username
                 })
             });
 
@@ -131,10 +133,10 @@ export default function Board() {
     };
 
     const COLUMNS = [
-        { id: 'Plan', title: team?.title_plan || 'الخطة', color: 'border-t-blue-400' },
-        { id: 'Execution', title: team?.title_execution || 'التنفيذ', color: 'border-t-yellow-400' },
-        { id: 'Completed', title: team?.title_completed || 'مكتمل', color: 'border-t-green-400' },
-        { id: 'Review', title: team?.title_review || 'مراجعة', color: 'border-t-purple-400' },
+        { id: 'Plan', title: team?.title_plan || 'تخطيط', color: 'bg-[#DEE8EE]', textColor: 'text-[#5E7B8D]', borderColor: 'border-gray-200' },
+        { id: 'Execution', title: team?.title_execution || 'جاري العمل', color: 'bg-[#FEF5E7]', textColor: 'text-[#8D7B5E]', borderColor: 'border-gray-200' },
+        { id: 'Review', title: team?.title_review || 'مراجعة', color: 'bg-[#F2EEF8]', textColor: 'text-[#7B5E8D]', borderColor: 'border-gray-200' },
+        { id: 'Completed', title: team?.title_completed || 'مكتمل', color: 'bg-[#EBF5EE]', textColor: 'text-[#5E8D7B]', borderColor: 'border-gray-200' },
     ] as const;
 
     const handleUpdateColumnTitle = async (columnId: string, newTitle: string) => {
@@ -178,8 +180,8 @@ export default function Board() {
     }
 
     return (
-        <div className="h-[calc(100vh-64px)] overflow-x-auto overflow-y-hidden bg-gradient-to-br from-indigo-50/50 via-purple-50/50 to-pink-50/50">
-            <div className="flex px-8 py-8 gap-8 h-full min-w-max items-start">
+        <div className="h-[calc(100vh-64px)] overflow-x-auto overflow-y-hidden bg-[#F8FAFC]">
+            <div className="flex px-8 py-8 gap-10 h-full min-w-max items-start">
                 <DragDropContext onDragEnd={onDragEnd}>
                     {COLUMNS.map((column) => (
                         <Column
@@ -187,6 +189,8 @@ export default function Board() {
                             id={column.id}
                             title={column.title}
                             color={column.color}
+                            textColor={column.textColor}
+                            borderColor={column.borderColor}
                             tasks={tasks.filter((t) => t.status === column.id)}
                             onCreateTask={(title) => handleCreateTask(column.id as Task['status'], title)}
                             onTaskClick={openTask}

@@ -33,7 +33,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { title, status, image_data, team_id } = body;
+        const { title, status, image_data, team_id, user_id, user_name, background_color } = body;
 
         if (!title || !status || !team_id) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -41,16 +41,16 @@ export async function POST(request: Request) {
 
         const id = uuidv4();
         await db.execute({
-            sql: 'INSERT INTO tasks (id, title, status, image_data, team_id) VALUES (?, ?, ?, ?, ?)',
-            args: [id, title, status, image_data || null, team_id],
+            sql: 'INSERT INTO tasks (id, title, status, image_data, team_id, user_id, user_name, background_color) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            args: [id, title, status, image_data || null, team_id, user_id || null, user_name || null, background_color || null],
         });
 
         // Notify team (Demo: notify the support email)
         if (process.env.SMTP_USER) {
-            sendTaskNotification(process.env.SMTP_USER, title, status, "فريق العمل");
+            sendTaskNotification(process.env.SMTP_USER, title, status, user_name || "فريق العمل");
         }
 
-        return NextResponse.json({ id, title, status, image_data, team_id });
+        return NextResponse.json({ id, title, status, image_data, team_id, user_id, user_name, background_color });
     } catch (error) {
         console.error('Error creating task:', error);
         return NextResponse.json({ error: 'Failed to create task' }, { status: 500 });

@@ -188,22 +188,55 @@ export default function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
                             onChange={(e) => setTitle(e.target.value)}
                             onBlur={saveTitle}
                             readOnly={!isAdmin}
-                            className={`text-xl font-bold bg-transparent outline-none w-full text-gray-800 ${!isAdmin ? 'cursor-default' : ''}`}
+                            className={`text-2xl font-black bg-transparent outline-none w-full text-gray-800 ${!isAdmin ? 'cursor-default' : ''}`}
                             placeholder="عنوان المهمة"
                         />
                         {isAdmin && (
-                            <div className="flex gap-2 mt-2">
-                                {(['Plan', 'Execution', 'Completed', 'Review'] as const).map((s) => (
+                            <div className="flex flex-wrap gap-2 mt-4">
+                                {(['Plan', 'Execution', 'Review', 'Completed'] as const).map((s) => (
                                     <button
                                         key={s}
                                         onClick={() => handleStatusChange(s)}
-                                        className={`text-xs px-2 py-1 rounded-full border transition-colors ${status === s
-                                            ? 'bg-blue-600 text-white border-blue-600'
-                                            : 'bg-transparent text-gray-500 border-gray-200 hover:border-blue-300'
+                                        className={`text-sm px-3 py-1.5 rounded-full border transition-all font-bold ${status === s
+                                            ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-200'
+                                            : 'bg-white text-gray-500 border-gray-200 hover:border-blue-300'
                                             }`}
                                     >
-                                        {s === 'Plan' ? 'الخطة' : s === 'Execution' ? 'التنفيذ' : s === 'Completed' ? 'مكتمل' : 'مراجعة'}
+                                        {s === 'Plan' ? 'تخطيط' : s === 'Execution' ? 'جاري العمل' : s === 'Review' ? 'مراجعة' : 'مكتمل'}
                                     </button>
+                                ))}
+                            </div>
+                        )}
+
+                        {isAdmin && (
+                            <div className="flex items-center gap-2 mt-4">
+                                <span className="text-xs font-bold text-gray-400 ml-2">لون الخلفية:</span>
+                                {[
+                                    '#ffffff', // White
+                                    '#f0f9ff', // Light Blue
+                                    '#fdf2f8', // Light Pink
+                                    '#f0fdf4', // Light Green
+                                    '#fffbeb', // Light Yellow
+                                    '#faf5ff', // Light Purple
+                                    '#fff1f2', // Light Red
+                                ].map((color) => (
+                                    <button
+                                        key={color}
+                                        onClick={async () => {
+                                            updateTask(task.id, { background_color: color });
+                                            try {
+                                                await fetch(`/api/tasks/${task.id}`, {
+                                                    method: 'PUT',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ background_color: color })
+                                                });
+                                            } catch (e) {
+                                                toast.error('فشل حفظ اللون');
+                                            }
+                                        }}
+                                        className={`w-6 h-6 rounded-full border transition-transform hover:scale-110 ${task.background_color === color || (!task.background_color && color === '#ffffff') ? 'ring-2 ring-blue-500 ring-offset-2' : 'border-gray-200'}`}
+                                        style={{ backgroundColor: color }}
+                                    />
                                 ))}
                             </div>
                         )}

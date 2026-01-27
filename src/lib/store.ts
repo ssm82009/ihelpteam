@@ -28,6 +28,9 @@ export interface Task {
     team_id: string;
     created_at?: string;
     comment_count?: number;
+    user_id?: string;
+    user_name?: string;
+    background_color?: string;
 }
 
 export interface Comment {

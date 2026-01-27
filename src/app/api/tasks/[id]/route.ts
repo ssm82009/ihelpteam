@@ -5,7 +5,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const { id } = params;
 
     try {
-        const { status, title, image_data } = await request.json();
+        const { status, title, image_data, background_color } = await request.json();
 
         const updates = [];
         const args = [];
@@ -21,6 +21,10 @@ export async function PUT(request: Request, { params }: { params: { id: string }
         if (image_data !== undefined) {
             updates.push('image_data = ?');
             args.push(image_data);
+        }
+        if (background_color !== undefined) {
+            updates.push('background_color = ?');
+            args.push(background_color);
         }
 
         if (updates.length === 0) {

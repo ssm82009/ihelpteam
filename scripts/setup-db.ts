@@ -26,7 +26,12 @@ async function main() {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       description TEXT,
-      secret_code TEXT UNIQUE NOT NULL
+      secret_code TEXT UNIQUE NOT NULL,
+      admin_id TEXT,
+      title_plan TEXT,
+      title_execution TEXT,
+      title_completed TEXT,
+      title_review TEXT
     );`,
 
     `CREATE TABLE IF NOT EXISTS users (
@@ -43,7 +48,11 @@ async function main() {
       image_data TEXT,
       team_id TEXT NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (team_id) REFERENCES teams(id)
+      user_id TEXT,
+      user_name TEXT,
+      background_color TEXT,
+      FOREIGN KEY (team_id) REFERENCES teams(id),
+      FOREIGN KEY (user_id) REFERENCES users(id)
     );`,
 
     `CREATE TABLE IF NOT EXISTS comments (
