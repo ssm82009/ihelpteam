@@ -1,17 +1,25 @@
 import { NextResponse } from 'next/server';
 import { PaylinkService } from '@/lib/paylink';
-import { PLANS } from '@/lib/plans';
+import { db } from '@/lib/db';
+import { getSiteSettings } from '@/lib/settings';
 
 export async function POST(request: Request) {
     try {
         const { email, username, planType } = await request.json();
 
-        if (!email || !planType || !PLANS[planType as keyof typeof PLANS]) {
-            return NextResponse.json({ error: 'Missing required data' }, { status: 400 });
+        // Fetch plan from DB
+        const planResult = await db.execute({
+            sql: 'SELECT * FROM subscription_plans WHERE id = ?',
+            args: [planType]
+        });
+
+        if (planResult.rows.length === 0) {
+            return NextResponse.json({ error: 'Plan not found' }, { status: 404 });
         }
 
-        const plan = PLANS[planType as keyof typeof PLANS];
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        const plan: any = planResult.rows[0];
+        const siteSettings = await getSiteSettings();
+        const baseUrl = siteSettings.next_public_base_url || process.env.NEXT_PUBLIC_BASE_URL || 'https://ihelp.team';
 
         const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
@@ -19,7 +27,7 @@ export async function POST(request: Request) {
             amount: plan.price,
             clientName: username || email,
             clientEmail: email,
-            clientMobile: '0500000000', // Default or user provided
+            clientMobile: '0500000000',
             callbackUrl: `${baseUrl}/api/subscription/paylink/callback?orderId=${orderNumber}&email=${encodeURIComponent(email)}&plan=${planType}`,
             cancelUrl: `${baseUrl}/?error=payment_cancelled`,
             orderNumber: orderNumber,

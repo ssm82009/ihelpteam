@@ -1,18 +1,27 @@
+import { getPaymentSettings } from './settings';
+
 export class PaylinkService {
-    private static baseUrl = process.env.PAYLINK_BASE_URL || 'https://restapi.paylink.sa';
-    private static apiId = process.env.PAYLINK_API_ID;
-    private static secretKey = process.env.PAYLINK_SECRET_KEY;
+    private static async getSettings() {
+        const dbSettings = await getPaymentSettings();
+        return {
+            baseUrl: dbSettings.paylink_base_url || process.env.PAYLINK_BASE_URL || 'https://restapi.paylink.sa',
+            apiId: dbSettings.paylink_api_id || process.env.PAYLINK_API_ID,
+            secretKey: dbSettings.paylink_secret_key || process.env.PAYLINK_SECRET_KEY,
+        };
+    }
 
     private static async getAuthToken(): Promise<string> {
-        const response = await fetch(`${this.baseUrl}/api/auth`, {
+        const { baseUrl, apiId, secretKey } = await this.getSettings();
+
+        const response = await fetch(`${baseUrl}/api/auth`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'accept': 'application/json',
             },
             body: JSON.stringify({
-                apiId: this.apiId,
-                secretKey: this.secretKey,
+                apiId: apiId,
+                secretKey: secretKey,
                 persistToken: false,
             }),
         });
@@ -37,9 +46,10 @@ export class PaylinkService {
         orderNumber: string;
         products: { title: string; price: number; qty: number }[];
     }) {
+        const { baseUrl } = await this.getSettings();
         const token = await this.getAuthToken();
 
-        const response = await fetch(`${this.baseUrl}/api/addInvoice`, {
+        const response = await fetch(`${baseUrl}/api/addInvoice`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -68,9 +78,10 @@ export class PaylinkService {
     }
 
     static async getInvoiceStatus(transactionNo: string) {
+        const { baseUrl } = await this.getSettings();
         const token = await this.getAuthToken();
 
-        const response = await fetch(`${this.baseUrl}/api/getInvoice/${transactionNo}`, {
+        const response = await fetch(`${baseUrl}/api/getInvoice/${transactionNo}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,

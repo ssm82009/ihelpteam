@@ -17,9 +17,21 @@ export async function GET(request: Request) {
         const status = await PaylinkService.getInvoiceStatus(transactionNo);
 
         if (status.orderStatus === 'Paid') {
-            const subscription_end = planType === 'pro'
-                ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
-                : null;
+            const planResult = await db.execute({
+                sql: 'SELECT duration FROM subscription_plans WHERE id = ?',
+                args: [planType]
+            });
+
+            let subscription_end = null;
+            if (planResult.rows.length > 0) {
+                const duration = planResult.rows[0].duration as string;
+                if (duration === '1 year') {
+                    subscription_end = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+                } else if (duration !== 'unlimited') {
+                    // Default fallback or more logic for other durations like '1 month'
+                    subscription_end = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+                }
+            }
 
             await db.execute({
                 sql: 'UPDATE users SET plan_type = ?, subscription_end = ? WHERE email = ?',
