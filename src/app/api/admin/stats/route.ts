@@ -25,7 +25,7 @@ export async function GET() {
         `);
 
         // 4. Recent Users
-        const recentUsers = await db.execute('SELECT id, username, email, plan_type FROM users ORDER BY id DESC LIMIT 20');
+        const recentUsers = await db.execute('SELECT id, username, email, plan_type, subscription_end FROM users ORDER BY id DESC LIMIT 50');
 
         return NextResponse.json({
             stats: {
