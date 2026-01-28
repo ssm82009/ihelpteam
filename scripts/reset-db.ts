@@ -5,9 +5,17 @@ import { v4 as uuidv4 } from 'uuid';
 
 dotenv.config({ path: '.env.local' });
 
+const url = process.env.TURSO_DATABASE_URL;
+const authToken = process.env.TURSO_AUTH_TOKEN;
+
+if (!url || !authToken) {
+    console.error('Missing TURSO_DATABASE_URL or TURSO_AUTH_TOKEN');
+    process.exit(1);
+}
+
 const db = createClient({
-    url: process.env.TURSO_DATABASE_URL!,
-    authToken: process.env.TURSO_AUTH_TOKEN!,
+    url,
+    authToken,
 });
 
 async function resetAndSeed() {
