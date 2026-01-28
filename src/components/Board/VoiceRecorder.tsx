@@ -82,15 +82,15 @@ export default function VoiceRecorder({ onRecordingComplete, isSending }: VoiceR
 
     if (audioURL) {
         return (
-            <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                <audio src={audioURL} controls className="h-8 w-48" />
-                <button onClick={cancelRecording} className="p-2 text-red-500 hover:bg-red-50 rounded-full">
+            <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg border border-border">
+                <audio src={audioURL} controls className="h-8 w-48 invert-[0.8] opacity-80" />
+                <button onClick={cancelRecording} className="p-2 text-destructive hover:bg-destructive/10 rounded-full">
                     <Trash2 size={16} />
                 </button>
                 <button
                     onClick={confirmRecording}
                     disabled={isSending}
-                    className="p-2 text-green-600 hover:bg-green-50 rounded-full disabled:opacity-50"
+                    className="p-2 text-emerald-600 hover:bg-emerald-500/10 rounded-full disabled:opacity-50"
                 >
                     <Send size={16} />
                 </button>
@@ -101,12 +101,12 @@ export default function VoiceRecorder({ onRecordingComplete, isSending }: VoiceR
     return (
         <div className="flex items-center gap-2">
             {isRecording ? (
-                <div className="flex items-center gap-3 bg-red-50 px-3 py-1.5 rounded-full border border-red-100">
-                    <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                    <span className="text-xs font-mono text-red-600 font-medium">
+                <div className="flex items-center gap-3 bg-destructive/10 px-3 py-1.5 rounded-full border border-destructive/20">
+                    <span className="w-2 h-2 bg-destructive rounded-full animate-pulse"></span>
+                    <span className="text-xs font-mono text-destructive font-bold">
                         {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
                     </span>
-                    <button onClick={stopRecording} className="p-1.5 bg-white text-red-500 rounded-full shadow-sm hover:scale-105 transition">
+                    <button onClick={stopRecording} className="p-1.5 bg-card text-destructive rounded-full shadow-sm hover:scale-105 transition border border-destructive/10">
                         <Square size={14} fill="currentColor" />
                     </button>
                 </div>
@@ -114,7 +114,7 @@ export default function VoiceRecorder({ onRecordingComplete, isSending }: VoiceR
                 <button
                     type="button"
                     onClick={startRecording}
-                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                    className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors"
                     title="تسجيل صوتي"
                 >
                     <Mic size={20} />

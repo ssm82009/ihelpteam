@@ -33,13 +33,41 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'You are already a member of this team' }, { status: 400 });
         }
 
-        // 3. Hash Password & Create User
+        // 3. Check team member limits based on admin's plan
+        const adminResult = await db.execute({
+            sql: 'SELECT plan_type FROM users WHERE id = ?',
+            args: [team.admin_id],
+        });
+        const planType = (adminResult.rows[0]?.plan_type as any) || 'free';
+
+        const memberCountResult = await db.execute({
+            sql: 'SELECT COUNT(*) as count FROM users WHERE team_id = ?',
+            args: [team.id],
+        });
+        const currentMembers = Number(memberCountResult.rows[0].count);
+        const maxMembers = planType === 'pro' ? 10 : 5;
+
+        if (currentMembers >= maxMembers) {
+            return NextResponse.json({
+                error: `عذراً، وصل هذا الفريق للحد الأقصى من الأعضاء المسموح به في الباقة الحالية (${maxMembers} أعضاء).`
+            }, { status: 403 });
+        }
+
+        // 4. Inherit user's existing plan if any
+        const existingUserResult = await db.execute({
+            sql: 'SELECT plan_type, subscription_end FROM users WHERE email = ? ORDER BY created_at DESC LIMIT 1',
+            args: [email],
+        });
+        const userPlan = (existingUserResult.rows[0]?.plan_type as any) || 'free';
+        const subEnd = existingUserResult.rows[0]?.subscription_end || null;
+
+        // 5. Hash Password & Create User
         const hashedPassword = await bcrypt.hash(password, 10);
         const userId = uuidv4();
 
         await db.execute({
-            sql: 'INSERT INTO users (id, username, email, password, team_id) VALUES (?, ?, ?, ?, ?)',
-            args: [userId, username, email, hashedPassword, team.id as string],
+            sql: 'INSERT INTO users (id, username, email, password, team_id, plan_type, subscription_end) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            args: [userId, username, email, hashedPassword, team.id as string, userPlan, subEnd],
         });
 
         return NextResponse.json({

@@ -27,7 +27,14 @@ export async function POST(request: Request) {
         }
 
         return NextResponse.json({
-            user: { id: user.id, username: user.username, email: user.email, team_id: user.team_id },
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                team_id: user.team_id,
+                plan_type: user.plan_type,
+                subscription_end: user.subscription_end
+            },
             team: { id: user.team_id, name: user.team_name, secret_code: user.secret_code, admin_id: user.admin_id }
         });
     } catch (error) {

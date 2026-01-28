@@ -5,12 +5,12 @@ import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { useStore, Task } from '@/lib/store';
 import Column from './Column';
 import TaskModal from './TaskModal';
-import { Plus } from 'lucide-react';
+import { Plus, Minus } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 
 export default function Board() {
-    const { team, tasks, setTasks, updateTask, addTask, currentUser, setTeam } = useStore();
+    const { team, tasks, setTasks, updateTask, addTask, currentUser, setTeam, fontSize, setFontSize } = useStore();
     const [isClient, setIsClient] = useState(false);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -54,10 +54,6 @@ export default function Board() {
     }, [team?.id]);
 
     const onDragEnd = async (result: DropResult) => {
-        if (!isAdmin) {
-            toast.error('فقط منشئ الفريق يمكنه نقل المهام');
-            return;
-        }
         const { destination, source, draggableId } = result;
 
         if (!destination) return;
@@ -133,10 +129,10 @@ export default function Board() {
     };
 
     const COLUMNS = [
-        { id: 'Plan', title: team?.title_plan || 'تخطيط', color: 'bg-[#DEE8EE]', textColor: 'text-[#5E7B8D]', borderColor: 'border-gray-200' },
-        { id: 'Execution', title: team?.title_execution || 'جاري العمل', color: 'bg-[#FEF5E7]', textColor: 'text-[#8D7B5E]', borderColor: 'border-gray-200' },
-        { id: 'Review', title: team?.title_review || 'مراجعة', color: 'bg-[#F2EEF8]', textColor: 'text-[#7B5E8D]', borderColor: 'border-gray-200' },
-        { id: 'Completed', title: team?.title_completed || 'مكتمل', color: 'bg-[#EBF5EE]', textColor: 'text-[#5E8D7B]', borderColor: 'border-gray-200' },
+        { id: 'Plan', title: team?.title_plan || 'الخطة', color: 'bg-status-plan/10', textColor: 'text-status-plan', borderColor: 'border-status-plan/20' },
+        { id: 'Execution', title: team?.title_execution || 'جاري العمل', color: 'bg-status-exec/10', textColor: 'text-status-exec', borderColor: 'border-status-exec/20' },
+        { id: 'Review', title: team?.title_review || 'مراجعة', color: 'bg-status-review/10', textColor: 'text-status-review', borderColor: 'border-status-review/20' },
+        { id: 'Completed', title: team?.title_completed || 'مكتمل', color: 'bg-status-done/10', textColor: 'text-status-done', borderColor: 'border-status-done/20' },
     ] as const;
 
     const handleUpdateColumnTitle = async (columnId: string, newTitle: string) => {
@@ -173,15 +169,37 @@ export default function Board() {
         return (
             <div className="flex p-6 gap-6 h-[calc(100vh-80px)] overflow-x-auto">
                 {[1, 2, 3, 4].map(i => (
-                    <div key={i} className="min-w-[320px] bg-gray-100/50 rounded-2xl animate-pulse"></div>
+                    <div key={i} className="min-w-[320px] bg-muted/50 rounded-2xl animate-pulse"></div>
                 ))}
             </div>
         );
     }
 
     return (
-        <div className="h-[calc(100vh-64px)] overflow-x-auto overflow-y-hidden bg-[#F8FAFC]">
-            <div className="flex px-8 py-8 gap-10 h-full min-w-max items-start">
+        <div className="h-[calc(100vh-64px)] overflow-x-auto overflow-y-hidden bg-background relative transition-colors duration-300">
+            {/* Zoom Controls */}
+            <div className="fixed bottom-8 left-8 z-[100] flex items-center gap-2 bg-card/80 backdrop-blur-sm border border-border p-2 shadow-xl rounded-full transition-all hover:scale-105">
+                <button
+                    onClick={() => setFontSize(Math.max(10, fontSize - 1))}
+                    className="p-2 hover:bg-muted rounded-full text-muted-foreground transition-colors"
+                    title="تصغير الخط"
+                >
+                    <Minus size={18} />
+                </button>
+                <div className="w-[1px] h-4 bg-border mx-1" />
+                <button
+                    onClick={() => setFontSize(Math.min(24, fontSize + 1))}
+                    className="p-2 hover:bg-muted rounded-full text-muted-foreground transition-colors"
+                    title="تكبير الخط"
+                >
+                    <Plus size={18} />
+                </button>
+                <div className="px-2 text-xs font-black text-muted-foreground font-mono">
+                    {fontSize}px
+                </div>
+            </div>
+
+            <div className="flex px-8 py-8 gap-6 h-full w-full items-start">
                 <DragDropContext onDragEnd={onDragEnd}>
                     {COLUMNS.map((column) => (
                         <Column
@@ -191,7 +209,7 @@ export default function Board() {
                             color={column.color}
                             textColor={column.textColor}
                             borderColor={column.borderColor}
-                            tasks={tasks.filter((t) => t.status === column.id)}
+                            tasks={column.id === 'Plan' ? tasks : tasks.filter((t) => t.status === column.id)}
                             onCreateTask={(title) => handleCreateTask(column.id as Task['status'], title)}
                             onTaskClick={openTask}
                             isAdmin={isAdmin}

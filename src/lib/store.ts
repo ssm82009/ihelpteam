@@ -18,6 +18,8 @@ export interface User {
     username: string;
     email: string;
     team_id: string;
+    plan_type?: 'free' | 'pro';
+    subscription_end?: string | null;
 }
 
 export interface Task {
@@ -42,6 +44,10 @@ export interface Comment {
     created_at?: string;
 }
 
+export type ThemeType = 'light-pro' | 'dark-pro' | 'slate-pro' | 'emerald-pro' | 'pink-pro' | 'purple-pro' | 'forest-pro' | 'contrast-pro';
+export type RadiusType = 'sharp' | 'rounded';
+export type FontType = 'tajawal' | 'cairo' | 'arial' | 'default';
+
 interface AppState {
     team: Team | null;
     currentUser: User | null;
@@ -52,6 +58,14 @@ interface AppState {
     setTasks: (tasks: Task[]) => void;
     addTask: (task: Task) => void;
     updateTask: (id: string, updates: Partial<Task>) => void;
+    fontSize: number;
+    setFontSize: (size: number) => void;
+    theme: ThemeType;
+    setTheme: (theme: ThemeType) => void;
+    radius: RadiusType;
+    setRadius: (radius: RadiusType) => void;
+    fontFamily: FontType;
+    setFontFamily: (font: FontType) => void;
     logout: () => void;
 }
 
@@ -69,6 +83,14 @@ export const useStore = create<AppState>()(
             updateTask: (id, updates) => set((state) => ({
                 tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...updates } : t)),
             })),
+            fontSize: 16,
+            setFontSize: (fontSize) => set({ fontSize }),
+            theme: 'light-pro',
+            setTheme: (theme) => set({ theme }),
+            radius: 'rounded',
+            setRadius: (radius) => set({ radius }),
+            fontFamily: 'default',
+            setFontFamily: (fontFamily) => set({ fontFamily }),
             logout: () => set({ team: null, currentUser: null, tasks: [] }),
         }),
         {

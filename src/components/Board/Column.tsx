@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Droppable } from '@hello-pangea/dnd';
-import { Task } from '@/lib/store';
+import { Task, useStore } from '@/lib/store';
 import TaskCard from './TaskCard';
 import { Plus, X, Edit2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,10 +21,14 @@ interface ColumnProps {
 }
 
 export default function Column({ id, title, color, textColor, borderColor, tasks, onCreateTask, onTaskClick, isAdmin, onUpdateTitle }: ColumnProps) {
+    const { fontSize } = useStore();
     const [isAdding, setIsAdding] = useState(false);
     const [newTaskTitle, setNewTaskTitle] = useState('');
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [editedTitle, setEditedTitle] = useState(title);
+
+    // Calculate dynamic font size for header (base it on the global fontSize + 4px for emphasis)
+    const headerFontSize = fontSize + 4;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -44,9 +48,9 @@ export default function Column({ id, title, color, textColor, borderColor, tasks
     };
 
     return (
-        <div className="min-w-[300px] w-[300px] max-h-full flex flex-col group/column transition-all duration-300 border border-gray-200 pb-4">
+        <div className="flex-1 min-w-[280px] max-h-full flex flex-col group/column transition-all duration-300 border border-border pb-4 column-container rounded-2xl">
             {/* Column Header Capsule */}
-            <div className={`p-2.5 mb-6 flex items-center justify-between rounded-none ${color} ${borderColor} border shadow-sm`}>
+            <div className={`p-2.5 mb-6 flex items-center justify-between rounded-t-2xl ${color} ${borderColor} border-b shadow-sm`}>
                 <div className="flex items-center gap-3 flex-1 px-2">
                     {isEditingTitle && isAdmin ? (
                         <form onSubmit={handleTitleUpdate} className="flex-1">
@@ -55,36 +59,40 @@ export default function Column({ id, title, color, textColor, borderColor, tasks
                                 value={editedTitle}
                                 onChange={(e) => setEditedTitle(e.target.value)}
                                 onBlur={handleTitleUpdate}
-                                className="w-full font-bold text-gray-800 bg-white/50 border border-blue-200 outline-none rounded-none px-3 py-0.5"
+                                style={{ fontSize: `${headerFontSize}px` }}
+                                className="w-full font-bold text-foreground bg-background/50 border border-primary/20 outline-none rounded-lg px-3 py-0.5"
                             />
                         </form>
                     ) : (
                         <div className="flex items-center gap-2 group/title cursor-pointer w-full" onClick={() => isAdmin && setIsEditingTitle(true)}>
-                            <h2 className={`font-black ${textColor} text-xs uppercase tracking-widest`}>{title}</h2>
-                            <span className={`text-[10px] ${color} bg-white/80 ${textColor} px-2 py-0.5 rounded-none font-black shadow-sm`}>
-                                {tasks.length}
-                            </span>
+                            <div className={`w-3 h-3 rounded-full ${color.replace('/10', '')} mr-1`} />
+                            <h2
+                                className="font-black text-foreground tracking-wide"
+                                style={{ fontSize: `${headerFontSize}px` }}
+                            >
+                                {title}
+                            </h2>
                         </div>
                     )}
                 </div>
 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2">
+                    <span className={`text-[11px] ${color} bg-background/80 ${textColor} px-2 py-0.5 rounded-lg font-black shadow-sm`}>
+                        {tasks.length}
+                    </span>
                     {isAdmin && (
                         <button
                             onClick={() => setIsAdding(true)}
-                            className={`p-1.5 hover:bg-white/40 rounded-none transition-colors ${textColor} opacity-60 hover:opacity-100`}
+                            className={`p-1.5 hover:bg-background/40 rounded-lg transition-colors ${textColor} opacity-60 hover:opacity-100`}
                         >
                             <Plus size={14} />
                         </button>
                     )}
-                    <button className={`p-1.5 hover:bg-white/40 rounded-none transition-colors ${textColor} opacity-40 hover:opacity-100`}>
-                        <Edit2 size={12} className="opacity-0" /> {/* Spacer or extra action */}
-                    </button>
                 </div>
             </div>
 
             {/* Tasks Container */}
-            <div className="flex-1 overflow-y-auto px-1 space-y-4 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto px-2 space-y-4 custom-scrollbar">
                 <Droppable droppableId={id}>
                     {(provided) => (
                         <div
@@ -94,7 +102,14 @@ export default function Column({ id, title, color, textColor, borderColor, tasks
                         >
                             <AnimatePresence mode='popLayout'>
                                 {tasks.map((task, index) => (
-                                    <TaskCard key={task.id} task={task} index={index} onClick={() => onTaskClick(task)} isAdmin={isAdmin} />
+                                    <TaskCard
+                                        key={task.id}
+                                        task={task}
+                                        index={index}
+                                        onClick={() => onTaskClick(task)}
+                                        isAdmin={isAdmin}
+                                        isShadow={id === 'Plan' && task.status !== 'Plan'}
+                                    />
                                 ))}
                             </AnimatePresence>
                             {provided.placeholder}
@@ -108,12 +123,12 @@ export default function Column({ id, title, color, textColor, borderColor, tasks
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             onSubmit={handleSubmit}
-                            className="bg-white p-4 rounded-none border border-gray-200 shadow-md ring-2 ring-blue-50"
+                            className="bg-card p-4 rounded-xl border border-border shadow-md ring-2 ring-primary/5"
                         >
                             <textarea
                                 autoFocus
                                 placeholder="ما الذي يجب فعله؟"
-                                className="w-full text-sm font-bold resize-none outline-none text-gray-800 placeholder-gray-400 bg-transparent mb-3"
+                                className="w-full text-sm font-bold resize-none outline-none text-foreground placeholder-muted-foreground bg-transparent mb-3"
                                 rows={2}
                                 value={newTaskTitle}
                                 onChange={(e) => setNewTaskTitle(e.target.value)}
@@ -128,13 +143,13 @@ export default function Column({ id, title, color, textColor, borderColor, tasks
                                 <button
                                     type="button"
                                     onClick={() => setIsAdding(false)}
-                                    className="px-3 py-1.5 hover:bg-gray-100 rounded-none text-gray-500 text-xs font-bold transition-colors"
+                                    className="px-3 py-1.5 hover:bg-muted rounded-lg text-muted-foreground text-xs font-bold transition-colors"
                                 >
                                     إلغاء
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-1.5 bg-blue-600 text-white text-xs font-black rounded-none hover:bg-blue-700 transition shadow-lg shadow-blue-100"
+                                    className="px-4 py-1.5 bg-primary text-primary-foreground text-xs font-black rounded-lg hover:opacity-90 transition shadow-lg shadow-primary/10"
                                 >
                                     إضافة
                                 </button>
@@ -143,7 +158,7 @@ export default function Column({ id, title, color, textColor, borderColor, tasks
                     ) : (
                         <button
                             onClick={() => setIsAdding(true)}
-                            className="w-full py-4 flex items-center justify-center gap-2 text-gray-400 hover:text-blue-500 hover:bg-white rounded-none border-2 border-dashed border-gray-100 hover:border-blue-100 transition-all font-bold text-sm bg-gray-50/50"
+                            className="w-full py-4 flex items-center justify-center gap-2 text-muted-foreground hover:text-primary hover:bg-card rounded-xl border-2 border-dashed border-border/50 hover:border-primary/50 transition-all font-bold text-sm"
                         >
                             <Plus size={18} />
                             <span>إضافة مهمة</span>

@@ -11,6 +11,29 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Team name and admin details are required' }, { status: 400 });
         }
 
+        // 1. Check existing plan limits for this email
+        const existingUserResult = await db.execute({
+            sql: 'SELECT plan_type FROM users WHERE email = ? ORDER BY created_at DESC LIMIT 1',
+            args: [admin_email],
+        });
+
+        const planType = (existingUserResult.rows[0]?.plan_type as any) || 'free';
+
+        // Count how many teams this user (by email) is admin of
+        const ownedTeamsResult = await db.execute({
+            sql: 'SELECT COUNT(*) as count FROM teams t JOIN users u ON t.admin_id = u.id WHERE u.email = ?',
+            args: [admin_email],
+        });
+
+        const ownedCount = Number(ownedTeamsResult.rows[0].count);
+        const maxTeams = planType === 'pro' ? 10 : 1;
+
+        if (ownedCount >= maxTeams) {
+            return NextResponse.json({
+                error: `لقد وصلت للحد الأقصى من المشاريع (${ownedCount}/${maxTeams}). قم بالترقية للباقة الاحترافية لإنشاء المزيد.`
+            }, { status: 403 });
+        }
+
         const teamId = uuidv4();
         const userId = uuidv4();
         const secret_code = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -23,10 +46,11 @@ export async function POST(request: Request) {
 
         // 2. Create Admin User
         const hashedPassword = await bcrypt.hash(admin_password, 10);
+        const subEnd = existingUserResult.rows[0]?.subscription_end || null;
 
         await db.execute({
-            sql: 'INSERT INTO users (id, username, email, password, team_id) VALUES (?, ?, ?, ?, ?)',
-            args: [userId, admin_name, admin_email, hashedPassword, teamId],
+            sql: 'INSERT INTO users (id, username, email, password, team_id, plan_type, subscription_end) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            args: [userId, admin_name, admin_email, hashedPassword, teamId, planType, subEnd],
         });
 
         return NextResponse.json({
