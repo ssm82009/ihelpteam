@@ -12,7 +12,7 @@ export default function AdminPlans() {
         setLoading(true);
         fetch('/api/admin/plans')
             .then(res => res.json())
-            .then(data => {
+            .then((data: any) => {
                 setPlans(data);
                 setLoading(false);
             });
@@ -75,11 +75,11 @@ export default function AdminPlans() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {editingPlan && editingPlan.id === 'new' && (
-                    <PlanEditor plan={editingPlan} onSave={(data) => handleSave('new', data)} onCancel={() => setEditingPlan(null)} />
+                    <PlanEditor plan={editingPlan} onSave={(data: any) => handleSave('new', data)} onCancel={() => setEditingPlan(null)} />
                 )}
                 {plans.map((plan) => (
                     editingPlan?.id === plan.id ? (
-                        <PlanEditor key={plan.id} plan={editingPlan} onSave={(data) => handleSave(plan.id, data)} onCancel={() => setEditingPlan(null)} />
+                        <PlanEditor key={plan.id} plan={editingPlan} onSave={(data: any) => handleSave(plan.id, data)} onCancel={() => setEditingPlan(null)} />
                     ) : (
                         <div key={plan.id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col h-full">
                             <div className="flex justify-between items-start mb-4">

@@ -20,7 +20,7 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
         if (isOpen) {
             fetch('/api/admin/plans')
                 .then(res => res.json())
-                .then(data => {
+                .then((data: any) => {
                     setPlans(data);
                     setLoading(false);
                 });
@@ -89,7 +89,7 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
                                 <div className="text-center py-12 text-slate-500 font-bold">جاري تحميل الباقات...</div>
                             ) : (
                                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 overflow-y-auto max-h-[60vh] p-2">
-                                    {plans.map((plan) => (
+                                    {plans.map((plan: any) => (
                                         <div key={plan.id} className={`relative p-6 rounded-3xl border-2 transition-all flex flex-col ${currentPlan === plan.id ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-primary/40 shadow-xl shadow-black/5'}`}>
                                             {currentPlan === plan.id && (
                                                 <div className="absolute -top-3 right-6 bg-primary text-primary-foreground text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter">

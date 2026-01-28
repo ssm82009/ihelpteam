@@ -18,7 +18,7 @@ export default function AdminSettings() {
     useEffect(() => {
         fetch('/api/admin/settings?type=site')
             .then(res => res.json())
-            .then(data => {
+            .then((data: any) => {
                 if (!data.error) setSettings(prev => ({ ...prev, ...data }));
                 setLoading(false);
             });

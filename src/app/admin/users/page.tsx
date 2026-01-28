@@ -12,7 +12,7 @@ export default function AdminUsers() {
         setLoading(true);
         fetch('/api/admin/stats')
             .then(res => res.json())
-            .then(data => {
+            .then((data: any) => {
                 setUsers(data.recentUsers);
                 setLoading(false);
             });

@@ -16,7 +16,7 @@ export default function AdminPayment() {
     useEffect(() => {
         fetch('/api/admin/settings?type=payment')
             .then(res => res.json())
-            .then(data => {
+            .then((data: any) => {
                 if (!data.error) setSettings(prev => ({ ...prev, ...data }));
                 setLoading(false);
             });
