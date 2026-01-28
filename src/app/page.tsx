@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/lib/store';
 import { toast } from 'react-hot-toast';
@@ -374,6 +375,13 @@ function HomeContent() {
                         </button>
                     </div>
                 )}
+            </div>
+
+            {/* Admin Access Link */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
+                <Link href="/admin/login" className="text-[10px] text-muted-foreground/30 hover:text-primary/50 transition-colors uppercase tracking-widest font-bold">
+                    Admin Access
+                </Link>
             </div>
         </main>
     );
