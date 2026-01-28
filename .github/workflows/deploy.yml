@@ -79,6 +79,20 @@ jobs:
                 echo "Error: deploy.zip not found!"
                 exit 1
             fi
+
+            # Create .env file for runtime secrets
+            cat <<EOF > .env
+            TURSO_DATABASE_URL=${{ secrets.TURSO_DATABASE_URL }}
+            TURSO_AUTH_TOKEN=${{ secrets.TURSO_AUTH_TOKEN }}
+            PAYLINK_API_ID=${{ secrets.PAYLINK_API_ID }}
+            PAYLINK_SECRET_KEY=${{ secrets.PAYLINK_SECRET_KEY }}
+            PAYLINK_BASE_URL=${{ secrets.PAYLINK_BASE_URL }}
+            NEXT_PUBLIC_BASE_URL=https://ihelp.team
+            SMTP_HOST=${{ secrets.SMTP_HOST }}
+            SMTP_PORT=${{ secrets.SMTP_PORT }}
+            SMTP_USER=${{ secrets.SMTP_USER }}
+            SMTP_PASS=${{ secrets.SMTP_PASS }}
+            EOF
             
             # Create ecosystem.config.js for PM2
             cat <<EOF > ecosystem.config.js
