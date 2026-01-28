@@ -7,7 +7,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     const admin = await isAdmin();
 
     if (!admin) {
-        redirect('/admin/login');
+        redirect('/admin-login');
     }
 
     const menuItems = [

@@ -379,7 +379,7 @@ function HomeContent() {
 
             {/* Admin Access Link */}
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
-                <Link href="/admin/login" className="text-[10px] text-muted-foreground/30 hover:text-primary/50 transition-colors uppercase tracking-widest font-bold">
+                <Link href="/admin-login" className="text-[10px] text-muted-foreground/30 hover:text-primary/50 transition-colors uppercase tracking-widest font-bold">
                     Admin Access
                 </Link>
             </div>
