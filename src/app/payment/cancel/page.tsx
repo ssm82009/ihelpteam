@@ -26,18 +26,18 @@ function CancelContent() {
                 <div className="grid grid-cols-1 gap-3">
                     <button
                         onClick={() => router.push(returnPath)}
-                        className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-lg active:scale-[0.98]"
+                        className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg active:scale-[0.98]"
                     >
                         <RefreshCcw size={20} />
-                        إعادة المحاولة
+                        العودة للوحة الفريق
                     </button>
 
+                    {/* Fallback link nicely tucked away */}
                     <Link
                         href="/"
-                        className="w-full bg-slate-100 text-slate-600 py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-slate-200 transition-all"
+                        className="text-xs text-slate-400 font-bold hover:text-slate-600 transition-colors mt-2"
                     >
-                        <Home size={20} />
-                        العودة للرئيسية
+                        أو العودة للصفحة الرئيسية
                     </Link>
                 </div>
 
