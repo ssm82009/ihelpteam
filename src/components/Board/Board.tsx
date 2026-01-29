@@ -214,8 +214,8 @@ export default function Board() {
                 </div>
             </div>
 
-            <div className="w-full h-full px-4 md:px-8 py-4 md:py-8 overflow-x-auto custom-scrollbar">
-                <div className="flex gap-4 md:gap-8 h-full items-start">
+            <div className="w-full h-full overflow-x-auto custom-scrollbar">
+                <div className="inline-flex min-w-full px-4 md:px-10 py-4 md:py-10 gap-4 md:gap-10 h-full items-start">
                     <DragDropContext onDragEnd={onDragEnd}>
                         {COLUMNS.map((column) => (
                             <Column
@@ -233,8 +233,6 @@ export default function Board() {
                             />
                         ))}
                     </DragDropContext>
-                    {/* Spacer for horizontal scroll comfort */}
-                    <div className="w-4 md:w-8 shrink-0" />
                 </div>
             </div>
 
