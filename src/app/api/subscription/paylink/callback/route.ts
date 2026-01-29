@@ -18,6 +18,21 @@ export async function GET(request: Request) {
         const status = await PaylinkService.getInvoiceStatus(transactionNo);
 
         if (status.orderStatus === 'Paid') {
+            // Fetch current user subscription status
+            const userResult = await db.execute({
+                sql: 'SELECT subscription_end FROM users WHERE email = ?',
+                args: [email]
+            });
+
+            const currentEnd = userResult.rows[0]?.subscription_end as string | null;
+            const now = Date.now();
+            let baseDate = now;
+
+            // If current subscription is still active, add to it
+            if (currentEnd && new Date(currentEnd).getTime() > now) {
+                baseDate = new Date(currentEnd).getTime();
+            }
+
             const planResult = await db.execute({
                 sql: 'SELECT duration FROM subscription_plans WHERE id = ?',
                 args: [planType]
@@ -27,10 +42,12 @@ export async function GET(request: Request) {
             if (planResult.rows.length > 0) {
                 const duration = planResult.rows[0].duration as string;
                 if (duration === '1 year') {
-                    subscription_end = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
-                } else if (duration !== 'unlimited') {
-                    // Default fallback or more logic for other durations like '1 month'
-                    subscription_end = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+                    subscription_end = new Date(baseDate + 365 * 24 * 60 * 60 * 1000).toISOString();
+                } else if (duration === 'unlimited') {
+                    subscription_end = null;
+                } else {
+                    // Default to 1 month (30 days) if not specified or different
+                    subscription_end = new Date(baseDate + 30 * 24 * 60 * 60 * 1000).toISOString();
                 }
             }
 

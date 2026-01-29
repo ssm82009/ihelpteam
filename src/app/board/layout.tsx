@@ -64,6 +64,21 @@ export default function BoardLayout({
         setTimeout(() => setCopied(false), 2000);
     };
 
+    const getRemainingTime = () => {
+        if (!currentUser?.subscription_end) return null;
+        const end = new Date(currentUser.subscription_end);
+        const now = new Date();
+        const diffTime = end.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays <= 0) return 'منتهي';
+        if (diffDays > 30) {
+            const months = Math.floor(diffDays / 30);
+            return `بقي ${months} شهر`;
+        }
+        return `بقي ${diffDays} يوم`;
+    };
+
     if (!hydrated || !team || !currentUser) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -181,11 +196,16 @@ export default function BoardLayout({
 
                     <button
                         onClick={() => setIsSubscriptionOpen(true)}
-                        className={`flex items-center gap-2 font-bold text-sm px-4 py-2 rounded-xl border shadow-sm transition-all active:scale-95 ${currentUser.plan_type === 'pro' ? 'bg-primary/10 border-primary/30 text-primary hover:bg-primary/20' : 'bg-secondary/50 hover:bg-secondary text-foreground border-border'}`}
+                        className={`flex flex-col items-center justify-center min-w-[100px] h-11 font-bold text-sm rounded-xl border shadow-sm transition-all active:scale-95 ${currentUser.plan_type === 'pro' ? 'bg-primary/10 border-primary/30 text-primary hover:bg-primary/20' : 'bg-secondary/50 hover:bg-secondary text-foreground border-border'}`}
                     >
-                        <CreditCard size={16} className={currentUser.plan_type === 'pro' ? 'text-primary' : 'text-primary'} />
-                        <span className="hidden sm:inline">الباقة</span>
-                        {currentUser.plan_type === 'pro' && <Star size={10} className="fill-primary" />}
+                        <div className="flex items-center gap-2">
+                            <CreditCard size={16} />
+                            <span className="hidden sm:inline">الباقة</span>
+                            {currentUser.plan_type === 'pro' && <Star size={10} className="fill-primary" />}
+                        </div>
+                        {currentUser.plan_type === 'pro' && getRemainingTime() && (
+                            <span className="text-[9px] font-black opacity-70 leading-none mt-0.5">{getRemainingTime()}</span>
+                        )}
                     </button>
 
                     <button

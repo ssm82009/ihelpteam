@@ -137,15 +137,29 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
                                                 </li>
                                             </ul>
 
-                                            {plan.price > 0 ? (
-                                                <button
-                                                    className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-black shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform active:scale-[0.98] disabled:opacity-50"
-                                                    onClick={() => handleUpgrade(plan.id)}
-                                                    disabled={isUpgrading}
-                                                >
-                                                    {isUpgrading ? 'جاري التحميل...' : (currentPlan === plan.id ? 'تجديد الاشتراك' : `اشترك الآن بـ ${plan.price} ر.س`)}
-                                                </button>
-                                            ) : (
+                                            {plan.price > 0 ? (() => {
+                                                const remDays = (() => {
+                                                    if (!currentUser?.subscription_end) return 0;
+                                                    const diff = new Date(currentUser.subscription_end).getTime() - Date.now();
+                                                    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+                                                })();
+                                                const canRenew = currentPlan !== plan.id || remDays <= 30;
+
+                                                return (
+                                                    <div className="flex flex-col gap-2">
+                                                        <button
+                                                            className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-black shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
+                                                            onClick={() => handleUpgrade(plan.id)}
+                                                            disabled={isUpgrading || !canRenew}
+                                                        >
+                                                            {isUpgrading ? 'جاري التحميل...' : (currentPlan === plan.id ? 'تجديد الاشتراك' : `اشترك الآن بـ ${plan.price} ر.س`)}
+                                                        </button>
+                                                        {!canRenew && (
+                                                            <p className="text-[10px] text-center text-primary font-bold">يمكنك التجديد عند بقاء أقل من شهر</p>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })() : (
                                                 <div className="w-full py-4 text-center text-muted-foreground font-black border border-dashed border-border rounded-2xl">
                                                     متوفر افتراضياً
                                                 </div>
