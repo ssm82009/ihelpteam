@@ -169,10 +169,13 @@ export default function Board() {
 
     if (!isClient) {
         return (
-            <div className="flex p-6 gap-6 h-[calc(100vh-80px)] overflow-x-auto">
-                {[1, 2, 3, 4, 5].map(i => (
-                    <div key={i} className="min-w-[320px] bg-muted/50 rounded-2xl animate-pulse"></div>
-                ))}
+            <div className="w-full h-[calc(100vh-80px)] overflow-x-auto bg-background transition-colors duration-300">
+                <div className="flex w-max min-w-full h-full p-6 md:p-12 gap-6 md:gap-12 items-start">
+                    {[1, 2, 3, 4, 5].map(i => (
+                        <div key={i} className="w-[320px] md:w-[350px] h-[80%] bg-muted/50 rounded-2xl animate-pulse shrink-0"></div>
+                    ))}
+                    <div className="w-12 md:w-24 shrink-0 h-full" />
+                </div>
             </div>
         );
     }
@@ -215,7 +218,7 @@ export default function Board() {
             </div>
 
             <div className="w-full h-full overflow-x-auto custom-scrollbar">
-                <div className="inline-flex min-w-full h-full p-6 md:p-12 gap-6 md:gap-12 items-start">
+                <div className="flex w-max min-w-full h-full p-6 md:p-12 gap-6 md:gap-12 items-start">
                     <DragDropContext onDragEnd={onDragEnd}>
                         {COLUMNS.map((column) => (
                             <Column
@@ -233,8 +236,8 @@ export default function Board() {
                             />
                         ))}
                     </DragDropContext>
-                    {/* Buffer spacer to ensure the right padding is always visible */}
-                    <div className="w-2 md:w-12 shrink-0 h-full" />
+                    {/* Generous buffer space for both RTL and LTR scroll ends */}
+                    <div className="w-12 md:w-24 shrink-0 h-px" />
                 </div>
             </div>
 
