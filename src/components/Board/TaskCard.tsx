@@ -1,6 +1,4 @@
-'use client';
-
-import { useState } from 'react';
+import { useState, forwardRef } from 'react';
 import { Draggable } from '@hello-pangea/dnd';
 import { Task, useStore } from '@/lib/store';
 import { motion } from 'framer-motion';
@@ -15,7 +13,7 @@ interface TaskCardProps {
     isShadow?: boolean;
 }
 
-export default function TaskCard({ task, index, onClick, isAdmin, isShadow }: TaskCardProps) {
+const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({ task, index, onClick, isAdmin, isShadow }, ref) => {
     const { updateTask: updateStoreTask, fontSize } = useStore();
     const [isEditing, setIsEditing] = useState(false);
     const [editedTitle, setEditedTitle] = useState(task.title);
@@ -149,7 +147,7 @@ export default function TaskCard({ task, index, onClick, isAdmin, isShadow }: Ta
 
     if (isShadow) {
         return (
-            <div className="mb-3 grayscale opacity-60 pointer-events-none">
+            <div ref={ref} className="mb-3 grayscale opacity-60 pointer-events-none">
                 {cardContent}
             </div>
         );
@@ -159,7 +157,11 @@ export default function TaskCard({ task, index, onClick, isAdmin, isShadow }: Ta
         <Draggable draggableId={task.id} index={index}>
             {(provided, snapshot) => (
                 <div
-                    ref={provided.innerRef}
+                    ref={(el) => {
+                        provided.innerRef(el);
+                        if (typeof ref === 'function') ref(el);
+                        else if (ref) ref.current = el;
+                    }}
                     {...provided.draggableProps}
                     {...provided.dragHandleProps}
                     style={{ ...provided.draggableProps.style }}
@@ -171,4 +173,8 @@ export default function TaskCard({ task, index, onClick, isAdmin, isShadow }: Ta
             )}
         </Draggable>
     );
-}
+});
+
+TaskCard.displayName = 'TaskCard';
+
+export default TaskCard;

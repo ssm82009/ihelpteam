@@ -13,7 +13,7 @@ export async function POST(request: Request) {
 
         // 1. Check existing user/plan for this email
         const existingUserResult = await db.execute({
-            sql: 'SELECT id, password, plan_type, subscription_end FROM users WHERE email = ? ORDER BY created_at DESC LIMIT 1',
+            sql: 'SELECT id, password, plan_type, subscription_end FROM users WHERE email = ? LIMIT 1',
             args: [admin_email],
         });
 
@@ -51,18 +51,30 @@ export async function POST(request: Request) {
         const secret_code = Math.random().toString(36).substring(2, 8).toUpperCase();
 
         // 1. Create Team (with admin_id)
-        await db.execute({
-            sql: 'INSERT INTO teams (id, name, description, secret_code, admin_id) VALUES (?, ?, ?, ?, ?)',
-            args: [teamId, name, description || '', secret_code, userId],
-        });
+        try {
+            await db.execute({
+                sql: 'INSERT INTO teams (id, name, description, secret_code, admin_id) VALUES (?, ?, ?, ?, ?)',
+                args: [teamId, name, description || '', secret_code, userId],
+            });
+        } catch (teamError: any) {
+            console.error('Database error creating team:', teamError);
+            return NextResponse.json({ error: 'فشل في إنشاء الفريق في قاعدة البيانات', details: teamError.message }, { status: 500 });
+        }
 
         // 2. Create Admin User (scopced to this team)
         const subEnd = existingUser?.subscription_end || null;
 
-        await db.execute({
-            sql: 'INSERT INTO users (id, username, email, password, team_id, plan_type, subscription_end) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            args: [userId, admin_name, admin_email, finalPassword, teamId, planType, subEnd],
-        });
+        try {
+            await db.execute({
+                sql: 'INSERT INTO users (id, username, email, password, team_id, plan_type, subscription_end) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                args: [userId, admin_name, admin_email, finalPassword, teamId, planType, subEnd],
+            });
+        } catch (userError: any) {
+            console.error('Database error creating user:', userError);
+            // If user creation fails, we should ideally delete the team we just created
+            await db.execute({ sql: 'DELETE FROM teams WHERE id = ?', args: [teamId] });
+            return NextResponse.json({ error: 'فشل في تسجيل بيانات المسؤول', details: userError.message }, { status: 500 });
+        }
 
         return NextResponse.json({
             id: teamId,
@@ -72,8 +84,8 @@ export async function POST(request: Request) {
             admin_id: userId,
             user: { id: userId, username: admin_name, email: admin_email, team_id: teamId }
         });
-    } catch (error) {
-        console.error('Error creating team:', error);
-        return NextResponse.json({ error: 'Failed to create team' }, { status: 500 });
+    } catch (error: any) {
+        console.error('Global Error creating team:', error);
+        return NextResponse.json({ error: 'حدث خطأ مفاجئ أثناء إنشاء الفريق', details: error.message }, { status: 500 });
     }
 }
