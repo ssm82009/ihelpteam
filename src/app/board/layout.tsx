@@ -394,7 +394,7 @@ export default function BoardLayout({
                 </div>
             </header>
 
-            <main className="flex-1 overflow-x-hidden pt-2">
+            <main className="flex-1 overflow-hidden pt-2">
                 {children}
             </main>
 

@@ -170,19 +170,19 @@ export default function Board() {
     if (!isClient) {
         return (
             <div className="w-full h-[calc(100vh-80px)] overflow-x-auto bg-background transition-colors duration-300">
-                <div className="flex w-max min-w-full h-full py-6 md:py-10 items-start">
-                    <div className="w-6 md:w-12 shrink-0 h-px" />
+                <div className="flex w-max min-w-full h-full py-6 md:py-8 items-start">
+                    <div className="w-4 md:w-8 shrink-0 h-px" />
                     {[1, 2, 3, 4, 5].map(i => (
-                        <div key={i} className="w-[320px] md:w-[350px] h-[80%] bg-muted/50 rounded-2xl animate-pulse shrink-0 mx-3 md:mx-5"></div>
+                        <div key={i} className="w-[280px] md:w-[300px] h-[80%] bg-muted/50 rounded-2xl animate-pulse shrink-0 mx-2 md:mx-2"></div>
                     ))}
-                    <div className="w-6 md:w-12 shrink-0 h-px" />
+                    <div className="w-4 md:w-8 shrink-0 h-px" />
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="h-[calc(100vh-80px)] overflow-x-auto overflow-y-hidden bg-background relative transition-colors duration-300">
+        <div className="h-[calc(100vh-80px)] overflow-hidden bg-background relative transition-colors duration-300">
             {/* Zoom Controls */}
             <div className="fixed bottom-8 left-8 z-[100] flex items-center gap-2 bg-card/80 backdrop-blur-sm border border-border p-2 shadow-xl rounded-full transition-all hover:scale-105">
                 <button
@@ -219,12 +219,12 @@ export default function Board() {
             </div>
 
             <div className="w-full h-full overflow-x-auto custom-scrollbar">
-                <div className="flex w-max min-w-full h-full py-6 md:py-10 items-start">
-                    {/* Perfect start padding for RTL/LTR */}
-                    <div className="w-6 md:w-12 shrink-0 h-px" />
+                <div className="flex w-max min-w-full h-full py-6 md:py-8 items-start">
+                    {/* Balanced start padding */}
+                    <div className="w-4 md:w-8 shrink-0 h-px" />
 
                     <DragDropContext onDragEnd={onDragEnd}>
-                        <div className="flex gap-6 md:gap-10 items-start">
+                        <div className="flex gap-4 md:gap-4 items-start">
                             {COLUMNS.map((column) => (
                                 <Column
                                     key={column.id}
@@ -243,8 +243,8 @@ export default function Board() {
                         </div>
                     </DragDropContext>
 
-                    {/* Perfect end padding for RTL/LTR */}
-                    <div className="w-6 md:w-12 shrink-0 h-px" />
+                    {/* Balanced end padding */}
+                    <div className="w-4 md:w-8 shrink-0 h-px" />
                 </div>
             </div>
 
