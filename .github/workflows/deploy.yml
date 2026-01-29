@@ -1,60 +1,16 @@
-name: Build and Deploy to aaPanel
+name: Deploy to aaPanel
 
 on:
   push:
     branches:
-      - main  # أو اسم الفرع الرئيسي لديك
+      - main
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Build Next.js App
-        run: npm run build
-        env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
-          PAYLINK_API_ID: ${{ secrets.PAYLINK_API_ID }}
-          PAYLINK_SECRET_KEY: ${{ secrets.PAYLINK_SECRET_KEY }}
-          PAYLINK_BASE_URL: ${{ secrets.PAYLINK_BASE_URL }}
-          NEXT_PUBLIC_BASE_URL: https://ihelp.team
-          SMTP_HOST: ${{ secrets.SMTP_HOST }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
-          SMTP_USER: ${{ secrets.SMTP_USER }}
-          SMTP_PASS: ${{ secrets.SMTP_PASS }}
-
-      - name: Prepare Standalone Build
-        run: |
-          cp -r public .next/standalone/
-          cp -r .next/static .next/standalone/.next/
-          # Create a zip for faster transfer
-          cd .next/standalone
-          zip -r ../../deploy.zip .
-
-      - name: Deploy to Server via SSH
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          source: "deploy.zip"
-          target: "/www/wwwroot/ihelp.team"
-
-      - name: Finalize Deployment on Server
+      - name: Deploy and Build on Server via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_IP }}
@@ -62,27 +18,23 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            # Ensure unzip is installed
-            if ! command -v unzip &> /dev/null; then
-                if command -v apt-get &> /dev/null; then
-                    sudo apt-get update && sudo apt-get install -y unzip
-                elif command -v yum &> /dev/null; then
-                    sudo yum install -y unzip
-                fi
-            fi
-
+            set -e
+            
+            echo "=== Step 1: Stop PM2 ==="
+            pm2 delete all || true
+            
+            echo "=== Step 2: Backup .env ==="
+            cp /www/wwwroot/ihelp.team/.env /tmp/ihelp_env_backup 2>/dev/null || true
+            
+            echo "=== Step 3: Clean directory ==="
+            rm -rf /www/wwwroot/ihelp.team/*
+            rm -rf /www/wwwroot/ihelp.team/.* 2>/dev/null || true
+            
+            echo "=== Step 4: Clone fresh from GitHub ==="
             cd /www/wwwroot/ihelp.team
-            if [ -f "deploy.zip" ]; then
-                # Clean old build files to prevent cache/stale files
-                rm -rf .next server.js
-                unzip -o deploy.zip
-                rm deploy.zip
-            else
-                echo "Error: deploy.zip not found!"
-                exit 1
-            fi
-
-            # Create .env file for runtime secrets
+            git clone https://github.com/ssm82009/ihelpteam.git .
+            
+            echo "=== Step 5: Create .env file ==="
             cat <<EOF > .env
             TURSO_DATABASE_URL=${{ secrets.TURSO_DATABASE_URL }}
             TURSO_AUTH_TOKEN=${{ secrets.TURSO_AUTH_TOKEN }}
@@ -97,13 +49,19 @@ jobs:
             ADMIN_TOKEN_SECRET=${{ secrets.ADMIN_TOKEN_SECRET }}
             EOF
             
-            # Create ecosystem.config.js for PM2
+            echo "=== Step 6: Install dependencies ==="
+            npm install
+            
+            echo "=== Step 7: Build the project ==="
+            npm run build
+            
+            echo "=== Step 8: Create ecosystem.config.js ==="
             cat <<EOF > ecosystem.config.js
             module.exports = {
               apps: [{
                 name: 'ihelp-team',
-                script: 'server.js',
-                interpreter: 'node',
+                script: 'npm',
+                args: 'start',
                 env: {
                   PORT: 3010,
                   NODE_ENV: 'production'
@@ -111,7 +69,9 @@ jobs:
               }]
             };
             EOF
-
-            # Reload application
-            pm2 reload ihelp-team || pm2 start ecosystem.config.js
+            
+            echo "=== Step 9: Start PM2 ==="
+            pm2 start ecosystem.config.js
             pm2 save
+            
+            echo "=== Deployment Complete! ==="
