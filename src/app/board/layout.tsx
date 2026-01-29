@@ -275,9 +275,6 @@ export default function BoardLayout({
                                 {currentUser.plan_type === 'pro' ? <Star size={18} className="fill-primary text-primary" /> : <CreditCard size={18} />}
                                 <span className="hidden md:inline">{currentUser.plan_type === 'pro' ? 'الباقة الاحترافية' : 'الباقة المجانية'}</span>
                             </div>
-                            {currentUser.plan_type === 'pro' && getRemainingTime() && (
-                                <span className="hidden md:block text-[9px] font-black opacity-60 leading-none mt-0.5">{getRemainingTime()}</span>
-                            )}
                         </button>
 
                         <div className="h-8 w-px bg-border/60 mx-1 hidden sm:block" />

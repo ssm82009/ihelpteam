@@ -145,6 +145,21 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
                                                 })();
                                                 const canRenew = currentPlan !== plan.id || remDays <= 30;
 
+                                                const getRemainingTime = () => {
+                                                    if (!currentUser?.subscription_end) return null;
+                                                    const end = new Date(currentUser.subscription_end);
+                                                    const now = new Date();
+                                                    const diffTime = end.getTime() - now.getTime();
+                                                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                                                    if (diffDays <= 0) return 'منتهي';
+                                                    if (diffDays > 30) {
+                                                        const months = Math.floor(diffDays / 30);
+                                                        return `بقي ${months} شهر`;
+                                                    }
+                                                    return `بقي ${diffDays} يوم`;
+                                                };
+
                                                 return (
                                                     <div className="flex flex-col gap-2">
                                                         <button
@@ -154,6 +169,12 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
                                                         >
                                                             {isUpgrading ? 'جاري التحميل...' : (currentPlan === plan.id ? 'تجديد الاشتراك' : `اشترك الآن بـ ${plan.price} ر.س`)}
                                                         </button>
+                                                        {currentPlan === plan.id && getRemainingTime() && (
+                                                            <div className="flex items-center justify-center gap-2 py-2 px-3 bg-primary/5 rounded-xl border border-primary/10">
+                                                                <Clock size={12} className="text-primary" />
+                                                                <span className="text-[11px] font-black text-primary">{getRemainingTime()}</span>
+                                                            </div>
+                                                        )}
                                                         {!canRenew && (
                                                             <p className="text-[10px] text-center text-primary font-bold">يمكنك التجديد عند بقاء أقل من شهر</p>
                                                         )}
