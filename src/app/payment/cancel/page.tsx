@@ -42,7 +42,7 @@ function CancelContent() {
                 </div>
 
                 <p className="mt-8 text-xs text-slate-400 font-medium">
-                    إذا واجهت مشكلة مستمرة، يرجى التواصل مع الدعم الفني.
+                    إذا واجهت مشكلة مستمرة، يرجى التواصل مع الدعم الفني. <span className="opacity-50">(v3.1)</span>
                 </p>
             </div>
         </div>
