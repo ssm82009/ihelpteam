@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
-import { LogOut, User as UserIcon, Shield, Users, Copy, Check, Palette, Moon, Sun, Monitor, Leaf, Plus, Layout, ChevronDown } from 'lucide-react';
+import { LogOut, User as UserIcon, Shield, Users, Copy, Check, Palette, Moon, Sun, Monitor, Leaf, Plus, Layout, ChevronDown, Headset } from 'lucide-react';
 import MemberModal from '@/components/Board/MemberModal';
 import SubscriptionModal from '@/components/Board/SubscriptionModal';
 import CreateTeamModal from '@/components/Board/CreateTeamModal';
@@ -281,6 +281,16 @@ export default function BoardLayout({
 
                         {/* Integrated Tools Group */}
                         <div className="flex items-center gap-1.5 md:gap-2.5 bg-secondary/20 p-1.5 rounded-[22px] border border-border/40 shadow-inner">
+                            <a
+                                href="https://t.me/iCodexTeam"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="h-9 w-9 md:h-10 md:w-10 flex items-center justify-center bg-card hover:bg-muted text-primary rounded-xl md:rounded-2xl border border-border/50 shadow-sm transition-all active:scale-95 group"
+                                title="اتصل بنا"
+                            >
+                                <Headset size={18} className="group-hover:scale-110 transition-transform" />
+                            </a>
+
                             <button
                                 onClick={() => setIsMembersModalOpen(true)}
                                 className="h-9 w-9 md:h-10 md:w-10 flex items-center justify-center bg-card hover:bg-muted text-primary rounded-xl md:rounded-2xl border border-border/50 shadow-sm transition-all active:scale-95 group"
