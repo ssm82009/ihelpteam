@@ -23,18 +23,15 @@ jobs:
             echo "=== Step 1: Stop PM2 ==="
             pm2 delete all || true
             
-            echo "=== Step 2: Backup .env ==="
-            cp /www/wwwroot/ihelp.team/.env /tmp/ihelp_env_backup 2>/dev/null || true
-            
-            echo "=== Step 3: Clean directory ==="
+            echo "=== Step 2: Clean directory ==="
             rm -rf /www/wwwroot/ihelp.team/*
             rm -rf /www/wwwroot/ihelp.team/.* 2>/dev/null || true
             
-            echo "=== Step 4: Clone fresh from GitHub ==="
+            echo "=== Step 3: Clone fresh from GitHub ==="
             cd /www/wwwroot/ihelp.team
             git clone https://github.com/ssm82009/ihelpteam.git .
             
-            echo "=== Step 5: Create .env file ==="
+            echo "=== Step 4: Create .env file ==="
             cat <<EOF > .env
             TURSO_DATABASE_URL=${{ secrets.TURSO_DATABASE_URL }}
             TURSO_AUTH_TOKEN=${{ secrets.TURSO_AUTH_TOKEN }}
@@ -49,28 +46,37 @@ jobs:
             ADMIN_TOKEN_SECRET=${{ secrets.ADMIN_TOKEN_SECRET }}
             EOF
             
-            echo "=== Step 6: Install dependencies ==="
+            echo "=== Step 5: Install dependencies ==="
             npm install
             
-            echo "=== Step 7: Build the project ==="
+            echo "=== Step 6: Build the project ==="
             npm run build
             
+            echo "=== Step 7: Setup Standalone for Production ==="
+            # نسخ الملفات الثابتة إلى مجلد standalone
+            cp -r .next/static .next/standalone/.next/static
+            cp -r public .next/standalone/public
+            # نسخ ملف .env إلى standalone
+            cp .env .next/standalone/.env
+            
             echo "=== Step 8: Create ecosystem.config.js ==="
-            cat <<EOF > ecosystem.config.js
+            cat <<EOF > .next/standalone/ecosystem.config.js
             module.exports = {
               apps: [{
                 name: 'ihelp-team',
-                script: 'npm',
-                args: 'start',
+                script: 'server.js',
+                cwd: '/www/wwwroot/ihelp.team/.next/standalone',
                 env: {
                   PORT: 3010,
-                  NODE_ENV: 'production'
+                  NODE_ENV: 'production',
+                  HOSTNAME: '0.0.0.0'
                 }
               }]
             };
             EOF
             
             echo "=== Step 9: Start PM2 ==="
+            cd .next/standalone
             pm2 start ecosystem.config.js
             pm2 save
             
