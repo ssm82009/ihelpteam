@@ -1,10 +1,10 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
-export default function PaymentSuccess() {
+function SuccessContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [countdown, setCountdown] = useState(5);
@@ -52,5 +52,13 @@ export default function PaymentSuccess() {
                 </Link>
             </div>
         </div>
+    );
+}
+
+export default function PaymentSuccess() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-50 font-bold text-slate-400">جاري التحميل...</div>}>
+            <SuccessContent />
+        </Suspense>
     );
 }
