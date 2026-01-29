@@ -233,6 +233,8 @@ export default function Board() {
                             />
                         ))}
                     </DragDropContext>
+                    {/* Spacer for horizontal scroll comfort */}
+                    <div className="w-4 md:w-8 shrink-0" />
                 </div>
             </div>
 
