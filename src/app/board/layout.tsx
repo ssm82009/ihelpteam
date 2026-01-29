@@ -86,11 +86,14 @@ export default function BoardLayout({
         setHydrated(true);
 
         // Sync user data with server to prevent stale localStorage (Cache issue)
-        if (currentUser?.email) {
+        if (currentUser?.email && team?.id) {
             fetch('/api/user/sync', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: currentUser.email }),
+                body: JSON.stringify({
+                    email: currentUser.email,
+                    team_id: team.id
+                }),
                 cache: 'no-store'
             })
                 .then(res => res.json())
@@ -198,9 +201,9 @@ export default function BoardLayout({
                         {isTeamMenuOpen && (
                             <>
                                 <div className="fixed inset-0 z-40" onClick={() => setIsTeamMenuOpen(false)} />
-                                <div className="absolute top-full right-0 mt-2 w-64 bg-card border border-border rounded-2xl shadow-2xl z-50 overflow-hidden py-2 animate-in fade-in zoom-in-95 duration-200">
-                                    <div className="px-4 py-2 border-b border-border/50 mb-2">
-                                        <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">تبديل الفريق</span>
+                                <div className="absolute top-[calc(100%+8px)] right-0 w-72 bg-card border border-border rounded-[24px] shadow-2xl z-50 overflow-hidden py-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <div className="px-5 py-2 border-b border-border/50 mb-3">
+                                        <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest font-tajawal">تبديل المشروع</span>
                                     </div>
 
                                     <div className="max-h-64 overflow-y-auto custom-scrollbar px-2 space-y-1">

@@ -5,15 +5,15 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
     try {
-        const { email } = await request.json();
+        const { email, team_id } = await request.json();
 
-        if (!email) {
-            return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+        if (!email || !team_id) {
+            return NextResponse.json({ error: 'Email and team_id are required' }, { status: 400 });
         }
 
         const userResult = await db.execute({
-            sql: 'SELECT id, username, email, team_id, plan_type, subscription_end FROM users WHERE email = ?',
-            args: [email]
+            sql: 'SELECT id, username, email, team_id, plan_type, subscription_end FROM users WHERE email = ? AND team_id = ?',
+            args: [email, team_id]
         });
 
         if (userResult.rows.length === 0) {
