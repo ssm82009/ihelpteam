@@ -38,14 +38,14 @@ export async function GET(request: Request) {
                 args: [planType, subscription_end, email],
             });
 
-            // Redirect to a success page or home with success message
-            return NextResponse.redirect(new URL('/?success=payment_completed', request.url));
+            // Redirect to a success page
+            return NextResponse.redirect(new URL('/payment/success', request.url));
         } else {
             console.warn('Payment not completed:', status.orderStatus);
-            return NextResponse.redirect(new URL('/?error=payment_failed', request.url));
+            return NextResponse.redirect(new URL('/payment/cancel', request.url));
         }
     } catch (error) {
         console.error('Error in Paylink callback:', error);
-        return NextResponse.redirect(new URL('/?error=server_error', request.url));
+        return NextResponse.redirect(new URL('/payment/cancel?error=server_error', request.url));
     }
 }

@@ -29,7 +29,7 @@ export async function POST(request: Request) {
             clientEmail: email,
             clientMobile: '0500000000',
             callbackUrl: `${baseUrl}/api/subscription/paylink/callback?orderId=${orderNumber}&email=${encodeURIComponent(email)}&plan=${planType}`,
-            cancelUrl: `${baseUrl}/?error=payment_cancelled`,
+            cancelUrl: `${baseUrl}/payment/cancel`,
             orderNumber: orderNumber,
             products: [
                 {

@@ -49,6 +49,9 @@ export default function AdminPayment() {
                     إدارة بوابة الدفع
                 </h1>
                 <p className="text-slate-500 mt-2 text-sm">قم بضبط مفاتيح الربط مع Paylink لإتمام عمليات الدفع</p>
+                <div className="mt-3 bg-blue-50 border border-blue-100 p-3 rounded-xl text-blue-700 text-xs leading-relaxed">
+                    💡 <strong>ملاحظة:</strong> المفاتيح المحفوظة هنا تُخزن في قاعدة البيانات وتُستخدم بدلاً من المفاتيح الموجودة في ملفات النظام. إذا كانت الحقول فارغة، فهذا يعني أنه لم يتم حفظ بيانات في قاعدة البيانات بعد.
+                </div>
             </header>
 
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 max-w-2xl mx-auto space-y-6">
