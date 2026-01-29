@@ -30,7 +30,7 @@ export default function BoardLayout({
         if (!currentUser?.email) return;
         setIsFetchingTeams(true);
         try {
-            const res = await fetch(`/api/user/teams?email=${encodeURIComponent(currentUser.email)}`);
+            const res = await fetch(`/api/user/teams?email=${encodeURIComponent(currentUser.email.toLowerCase())}`);
             const data = await res.json();
             if (res.ok) {
                 setUserTeams(data.teams || []);
@@ -43,28 +43,36 @@ export default function BoardLayout({
     };
 
     const handleSwitchTeam = async (targetTeamId: string) => {
-        if (!currentUser?.email || targetTeamId === team?.id) return;
+        if (!currentUser?.email || targetTeamId === team?.id) {
+            setIsTeamMenuOpen(false);
+            return;
+        }
 
         const loadingToast = toast.loading('جاري الانتقال للفريق...');
         try {
             const res = await fetch('/api/teams/switch', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: currentUser.email, team_id: targetTeamId })
+                body: JSON.stringify({ email: currentUser.email.toLowerCase(), team_id: targetTeamId })
             });
             const data = await res.json();
             if (res.ok) {
+                // Clear existing tasks to avoid visual flicker
+                useStore.getState().setTasks([]);
+
                 setCurrentUser(data.user);
                 setTeam(data.team);
                 setIsTeamMenuOpen(false);
                 toast.success(`مرحباً بك في ${data.team.name}`, { id: loadingToast });
-                // Force a small delay to ensure state is saved before any potential reload or heavy fetch
-                setTimeout(() => window.location.reload(), 500);
+
+                // Fast reload to clear hooks and state
+                setTimeout(() => window.location.reload(), 100);
             } else {
                 throw new Error(data.error);
             }
         } catch (error: any) {
             toast.error(error.message || 'فشل الانتقال للفريق', { id: loadingToast });
+            setIsTeamMenuOpen(false);
         }
     };
 
@@ -201,8 +209,8 @@ export default function BoardLayout({
                                                 key={t.id}
                                                 onClick={() => handleSwitchTeam(t.id)}
                                                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${t.id === team.id
-                                                        ? 'bg-primary/10 text-primary border border-primary/20'
-                                                        : 'hover:bg-muted text-foreground border border-transparent'
+                                                    ? 'bg-primary/10 text-primary border border-primary/20'
+                                                    : 'hover:bg-muted text-foreground border border-transparent'
                                                     }`}
                                             >
                                                 <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs font-black ${t.id === team.id ? 'bg-primary text-white' : 'bg-muted-foreground/20 text-muted-foreground'
