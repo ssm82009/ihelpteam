@@ -1,3 +1,4 @@
+'use client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, Star, Zap, Clock } from 'lucide-react';
 import { useStore } from '@/lib/store';
@@ -18,7 +19,14 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
 
     useEffect(() => {
         if (isOpen) {
-            fetch('/api/admin/plans', { cache: 'no-store' })
+            setLoading(true);
+            fetch(`/api/admin/plans?t=${Date.now()}`, {
+                cache: 'no-store',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            })
                 .then(res => res.json())
                 .then((data: any) => {
                     setPlans(data);
