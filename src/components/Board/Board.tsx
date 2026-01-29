@@ -223,10 +223,10 @@ export default function Board() {
 
     if (!isClient) {
         return (
-            <div className="w-full h-[calc(100vh-80px)] overflow-x-auto bg-background transition-colors duration-300 px-4 md:px-8">
-                <div className="flex xl:justify-center min-w-full h-full py-6 md:py-8 gap-4 md:gap-6 items-start">
+            <div className="w-full h-[calc(100vh-80px)] overflow-y-auto md:overflow-x-auto bg-background transition-colors duration-300 px-4 md:px-8">
+                <div className="flex flex-col md:flex-row xl:justify-center min-w-full py-6 md:py-8 gap-6 md:gap-6 items-center md:items-start">
                     {[1, 2, 3, 4, 5].map(i => (
-                        <div key={i} className="flex-1 min-w-[280px] max-w-[450px] h-[80%] bg-muted/50 rounded-2xl animate-pulse shrink-0"></div>
+                        <div key={i} className="w-full md:flex-1 min-w-0 md:min-w-[280px] max-w-[450px] h-[400px] md:h-[80%] bg-muted/50 rounded-2xl animate-pulse shrink-0"></div>
                     ))}
                 </div>
             </div>
@@ -234,7 +234,7 @@ export default function Board() {
     }
 
     return (
-        <div className="h-[calc(100vh-80px)] overflow-hidden bg-background relative transition-colors duration-300">
+        <div className="h-[calc(100vh-80px)] overflow-y-auto md:overflow-hidden bg-background relative transition-colors duration-300">
             {/* Zoom Controls */}
             <div className="fixed bottom-8 left-8 z-[100] flex items-center gap-2 bg-card/80 backdrop-blur-sm border border-border p-2 shadow-xl rounded-full transition-all hover:scale-105">
                 <button
@@ -270,8 +270,8 @@ export default function Board() {
                 </div>
             </div>
 
-            <div className="w-full h-full overflow-x-auto custom-scrollbar px-4 md:px-8">
-                <div className="flex xl:justify-center min-w-full h-full py-6 md:py-8 gap-4 md:gap-6 items-start">
+            <div className="w-full h-full overflow-x-hidden md:overflow-x-auto custom-scrollbar px-4 md:px-8">
+                <div className="flex flex-col md:flex-row xl:justify-center min-w-full py-6 md:py-8 gap-8 md:gap-6 items-center md:items-start">
                     <DragDropContext onDragEnd={onDragEnd}>
                         {COLUMNS.map((column) => (
                             <Column

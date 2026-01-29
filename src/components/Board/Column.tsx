@@ -61,7 +61,7 @@ export default function Column({ id, title, color, textColor, borderColor, tasks
     };
 
     return (
-        <div className="flex-1 min-w-[280px] max-w-[450px] shrink-0 max-h-full flex flex-col group/column transition-all duration-300 border border-border pb-4 column-container rounded-2xl">
+        <div className="w-full md:flex-1 min-w-0 md:min-w-[280px] max-w-[450px] shrink-0 h-fit md:max-h-full flex flex-col group/column transition-all duration-300 border border-border pb-4 column-container rounded-2xl">
             {/* Column Header Capsule */}
             <div className={`p-2.5 mb-6 flex items-center justify-between rounded-t-2xl ${color} ${borderColor} border-b shadow-sm`}>
                 <div className="flex items-center gap-3 flex-1 px-2">
