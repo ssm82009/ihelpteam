@@ -212,7 +212,7 @@ export default function Board() {
                 </div>
             </div>
 
-            <div className="max-w-[1700px] mx-auto h-full px-4 md:px-8 py-4 md:py-8 overflow-x-auto custom-scrollbar">
+            <div className="w-full h-full px-4 md:px-8 py-4 md:py-8 overflow-x-auto custom-scrollbar">
                 <div className="flex gap-4 md:gap-8 h-full items-start">
                     <DragDropContext onDragEnd={onDragEnd}>
                         {COLUMNS.map((column) => (

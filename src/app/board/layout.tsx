@@ -176,8 +176,8 @@ export default function BoardLayout({
 
     return (
         <div className="min-h-screen flex flex-col transition-colors duration-300">
-            <header className="h-20 glass-panel z-[110] sticky top-0 border-b border-border shadow-md px-4">
-                <div className="max-w-[1600px] mx-auto h-full flex items-center justify-between">
+            <header className="h-20 glass-panel z-[110] sticky top-0 border-b border-border shadow-md">
+                <div className="w-full h-full px-4 md:px-8 flex items-center justify-between">
                     {/* Left Side: Team & Projects */}
                     <div className="flex items-center gap-3">
                         <div className="relative">
