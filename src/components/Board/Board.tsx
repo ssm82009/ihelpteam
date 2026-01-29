@@ -169,13 +169,11 @@ export default function Board() {
 
     if (!isClient) {
         return (
-            <div className="w-full h-[calc(100vh-80px)] overflow-x-auto bg-background transition-colors duration-300">
-                <div className="flex w-max min-w-full h-full py-6 md:py-8 items-start">
-                    <div className="w-4 md:w-8 shrink-0 h-px" />
+            <div className="w-full h-[calc(100vh-80px)] overflow-x-auto bg-background transition-colors duration-300 px-4 md:px-8">
+                <div className="flex xl:justify-center min-w-full h-full py-6 md:py-8 gap-4 md:gap-6 items-start">
                     {[1, 2, 3, 4, 5].map(i => (
-                        <div key={i} className="w-[280px] md:w-[300px] h-[80%] bg-muted/50 rounded-2xl animate-pulse shrink-0 mx-2 md:mx-2"></div>
+                        <div key={i} className="flex-1 min-w-[280px] max-w-[450px] h-[80%] bg-muted/50 rounded-2xl animate-pulse shrink-0"></div>
                     ))}
-                    <div className="w-4 md:w-8 shrink-0 h-px" />
                 </div>
             </div>
         );
@@ -218,33 +216,25 @@ export default function Board() {
                 </div>
             </div>
 
-            <div className="w-full h-full overflow-x-auto custom-scrollbar">
-                <div className="flex w-max min-w-full h-full py-6 md:py-8 items-start">
-                    {/* Balanced start padding */}
-                    <div className="w-4 md:w-8 shrink-0 h-px" />
-
+            <div className="w-full h-full overflow-x-auto custom-scrollbar px-4 md:px-8">
+                <div className="flex xl:justify-center min-w-full h-full py-6 md:py-8 gap-4 md:gap-6 items-start">
                     <DragDropContext onDragEnd={onDragEnd}>
-                        <div className="flex gap-4 md:gap-4 items-start">
-                            {COLUMNS.map((column) => (
-                                <Column
-                                    key={column.id}
-                                    id={column.id}
-                                    title={column.title}
-                                    color={column.color}
-                                    textColor={column.textColor}
-                                    borderColor={column.borderColor}
-                                    tasks={column.id === 'Plan' ? tasks : tasks.filter((t) => t.status === column.id)}
-                                    onCreateTask={(title) => handleCreateTask(column.id as Task['status'], title)}
-                                    onTaskClick={openTask}
-                                    isAdmin={isAdmin}
-                                    onUpdateTitle={(newTitle) => handleUpdateColumnTitle(column.id, newTitle)}
-                                />
-                            ))}
-                        </div>
+                        {COLUMNS.map((column) => (
+                            <Column
+                                key={column.id}
+                                id={column.id}
+                                title={column.title}
+                                color={column.color}
+                                textColor={column.textColor}
+                                borderColor={column.borderColor}
+                                tasks={column.id === 'Plan' ? tasks : tasks.filter((t) => t.status === column.id)}
+                                onCreateTask={(title) => handleCreateTask(column.id as Task['status'], title)}
+                                onTaskClick={openTask}
+                                isAdmin={isAdmin}
+                                onUpdateTitle={(newTitle) => handleUpdateColumnTitle(column.id, newTitle)}
+                            />
+                        ))}
                     </DragDropContext>
-
-                    {/* Balanced end padding */}
-                    <div className="w-4 md:w-8 shrink-0 h-px" />
                 </div>
             </div>
 
