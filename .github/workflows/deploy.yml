@@ -23,10 +23,9 @@ jobs:
             echo "=== Step 1: Stop PM2 ==="
             pm2 delete all || true
             
-            echo "=== Step 2: Create/Clean directory ==="
+            echo "=== Step 2: Delete and recreate directory ==="
+            rm -rf /www/wwwroot/ihelp.team
             mkdir -p /www/wwwroot/ihelp.team
-            rm -rf /www/wwwroot/ihelp.team/*
-            rm -rf /www/wwwroot/ihelp.team/.* 2>/dev/null || true
             
             echo "=== Step 3: Clone fresh from GitHub ==="
             cd /www/wwwroot/ihelp.team
