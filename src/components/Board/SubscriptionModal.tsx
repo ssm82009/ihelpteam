@@ -112,7 +112,9 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
                                                 <h3 className="text-xl font-black text-foreground">{plan.name}</h3>
                                                 <div className="mt-2 flex items-baseline gap-1">
                                                     <span className={`text-3xl font-black ${plan.price > 0 ? 'text-primary' : 'text-foreground'}`}>{plan.price === 0 ? 'مجاني' : plan.price}</span>
-                                                    {plan.price > 0 && <span className="text-sm font-bold text-muted-foreground mr-1">ر.س / {plan.duration}</span>}
+                                                    {plan.price > 0 && <span className="text-sm font-bold text-muted-foreground mr-1">ر.س / {
+                                                        plan.duration.replace('year', 'سنة').replace('month', 'شهر').replace('1', '').trim()
+                                                    }</span>}
                                                 </div>
                                             </div>
 
@@ -133,7 +135,10 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
                                                     <div className="h-5 w-5 rounded-full bg-green-500/10 text-green-500 flex items-center justify-center">
                                                         <Check size={12} strokeWidth={4} />
                                                     </div>
-                                                    <span>مدة الصلاحية: {plan.duration === 'unlimited' ? 'غير محدودة' : plan.duration}</span>
+                                                    <span>مدة الصلاحية: {
+                                                        plan.duration === 'unlimited' ? 'غير محدودة' :
+                                                            plan.duration.replace('year', 'سنة').replace('month', 'شهر').replace('1', '').trim()
+                                                    }</span>
                                                 </li>
                                             </ul>
 
@@ -145,19 +150,15 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
                                                 })();
                                                 const canRenew = currentPlan !== plan.id || remDays <= 30;
 
-                                                const getRemainingTime = () => {
+                                                const getExpiryInfo = () => {
                                                     if (!currentUser?.subscription_end) return null;
                                                     const end = new Date(currentUser.subscription_end);
-                                                    const now = new Date();
-                                                    const diffTime = end.getTime() - now.getTime();
-                                                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                                                    if (diffDays <= 0) return 'منتهي';
-                                                    if (diffDays > 30) {
-                                                        const months = Math.floor(diffDays / 30);
-                                                        return `بقي ${months} شهر`;
-                                                    }
-                                                    return `بقي ${diffDays} يوم`;
+                                                    const dateStr = end.toLocaleDateString('ar-EG', {
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric'
+                                                    });
+                                                    return `تنتهي باقتك في تاريخ ${dateStr}`;
                                                 };
 
                                                 return (
@@ -169,10 +170,10 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
                                                         >
                                                             {isUpgrading ? 'جاري التحميل...' : (currentPlan === plan.id ? 'تجديد الاشتراك' : `اشترك الآن بـ ${plan.price} ر.س`)}
                                                         </button>
-                                                        {currentPlan === plan.id && getRemainingTime() && (
+                                                        {currentPlan === plan.id && currentUser?.subscription_end && (
                                                             <div className="flex items-center justify-center gap-2 py-2 px-3 bg-primary/5 rounded-xl border border-primary/10">
                                                                 <Clock size={12} className="text-primary" />
-                                                                <span className="text-[11px] font-black text-primary">{getRemainingTime()}</span>
+                                                                <span className="text-[11px] font-black text-primary">{getExpiryInfo()}</span>
                                                             </div>
                                                         )}
                                                         {!canRenew && (
