@@ -55,11 +55,15 @@ jobs:
             npm run build
             
             echo "=== Step 7: Setup Standalone for Production ==="
-            # نسخ الملفات الثابتة إلى مجلد standalone
+            # نسخ الملفات لخدمتها عبر تطبيق نود
             cp -r .next/static .next/standalone/.next/static
             cp -r public .next/standalone/public
-            # نسخ ملف .env إلى standalone
             cp .env .next/standalone/.env
+            
+            # نسخ الملفات للخدمة المباشرة عبر Nginx (حل مشكلة 404 في aaPanel)
+            mkdir -p _next
+            cp -r .next/static _next/static
+            cp -r public/* . 2>/dev/null || true
             
             echo "=== Step 8: Create ecosystem.config.js ==="
             cat <<EOF > .next/standalone/ecosystem.config.js
