@@ -14,7 +14,7 @@ interface TaskCardProps {
 }
 
 const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({ task, index, onClick, isAdmin, isShadow }, ref) => {
-    const { updateTask: updateStoreTask, fontSize } = useStore();
+    const { updateTask: updateStoreTask, fontSize, isBold } = useStore();
     const [isEditing, setIsEditing] = useState(false);
     const [editedTitle, setEditedTitle] = useState(task.title);
 
@@ -72,7 +72,10 @@ const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({ task, index, onCli
                     <textarea
                         autoFocus
                         className="w-full text-foreground p-2 bg-muted/20 rounded-lg border border-primary/20 outline-none resize-none"
-                        style={{ fontSize: `${fontSize}px` }}
+                        style={{
+                            fontSize: `${fontSize}px`,
+                            fontWeight: isBold ? 'bold' : 'normal'
+                        }}
                         rows={2}
                         value={editedTitle}
                         onChange={(e) => setEditedTitle(e.target.value)}
@@ -92,8 +95,11 @@ const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({ task, index, onCli
             ) : (
                 <div className="relative group/title">
                     <h3
-                        className="text-foreground font-bold leading-relaxed mb-3 pr-6"
-                        style={{ fontSize: `${fontSize}px` }}
+                        className="text-foreground leading-relaxed mb-3 pr-6"
+                        style={{
+                            fontSize: `${fontSize}px`,
+                            fontWeight: isBold ? 'bold' : 'normal'
+                        }}
                     >
                         {task.title}
                     </h3>

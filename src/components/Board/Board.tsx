@@ -5,12 +5,12 @@ import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { useStore, Task } from '@/lib/store';
 import Column from './Column';
 import TaskModal from './TaskModal';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, Bold } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 
 export default function Board() {
-    const { team, tasks, setTasks, updateTask, addTask, currentUser, setTeam, fontSize, setFontSize } = useStore();
+    const { team, tasks, setTasks, updateTask, addTask, currentUser, setTeam, fontSize, setFontSize, isBold, setIsBold } = useStore();
     const [isClient, setIsClient] = useState(false);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -176,7 +176,7 @@ export default function Board() {
     }
 
     return (
-        <div className="h-[calc(100vh-64px)] overflow-x-auto overflow-y-hidden bg-background relative transition-colors duration-300">
+        <div className="h-[calc(100vh-80px)] overflow-x-auto overflow-y-hidden bg-background relative transition-colors duration-300">
             {/* Zoom Controls */}
             <div className="fixed bottom-8 left-8 z-[100] flex items-center gap-2 bg-card/80 backdrop-blur-sm border border-border p-2 shadow-xl rounded-full transition-all hover:scale-105">
                 <button
@@ -194,12 +194,25 @@ export default function Board() {
                 >
                     <Plus size={18} />
                 </button>
+
+                <div className="w-[1px] h-4 bg-border mx-1" />
+
+                <button
+                    onClick={() => setIsBold(!isBold)}
+                    className={`p-2 rounded-full transition-all ${isBold ? 'bg-primary text-primary-foreground shadow-sm' : 'hover:bg-muted text-muted-foreground'}`}
+                    title={isBold ? "الخط عادي" : "الخط عريض"}
+                >
+                    <Bold size={18} />
+                </button>
+
+                <div className="w-[1px] h-4 bg-border mx-1" />
+
                 <div className="px-2 text-xs font-black text-muted-foreground font-mono">
                     {fontSize}px
                 </div>
             </div>
 
-            <div className="flex px-8 py-8 gap-6 h-full w-full items-start">
+            <div className="flex px-4 md:px-8 py-4 md:py-8 gap-4 md:gap-6 h-full items-start min-w-max">
                 <DragDropContext onDragEnd={onDragEnd}>
                     {COLUMNS.map((column) => (
                         <Column

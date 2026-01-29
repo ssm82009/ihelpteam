@@ -60,6 +60,8 @@ interface AppState {
     updateTask: (id: string, updates: Partial<Task>) => void;
     fontSize: number;
     setFontSize: (size: number) => void;
+    isBold: boolean;
+    setIsBold: (isBold: boolean) => void;
     theme: ThemeType;
     setTheme: (theme: ThemeType) => void;
     radius: RadiusType;
@@ -85,13 +87,15 @@ export const useStore = create<AppState>()(
             })),
             fontSize: 16,
             setFontSize: (fontSize) => set({ fontSize }),
+            isBold: false,
+            setIsBold: (isBold) => set({ isBold }),
             theme: 'light-pro',
             setTheme: (theme) => set({ theme }),
             radius: 'rounded',
             setRadius: (radius) => set({ radius }),
             fontFamily: 'default',
             setFontFamily: (fontFamily) => set({ fontFamily }),
-            logout: () => set({ team: null, currentUser: null, tasks: [] }),
+            logout: () => set({ team: null, currentUser: null, tasks: [], isBold: false }),
         }),
         {
             name: 'team-assistant-storage',
