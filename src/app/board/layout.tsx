@@ -87,7 +87,9 @@ export default function BoardLayout({
                         </div>
                         <div className="hidden sm:block">
                             <h1 className="font-black text-foreground leading-tight">{team.name}</h1>
-                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter">لوحة التحكم للفريق</p>
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter">
+                                لوحة التحكم للفريق <span className="text-primary ml-1">(v2.0)</span>
+                            </p>
                         </div>
                     </div>
 
