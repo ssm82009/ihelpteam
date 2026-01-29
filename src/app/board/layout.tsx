@@ -24,7 +24,24 @@ export default function BoardLayout({
 
     useEffect(() => {
         setHydrated(true);
-    }, []);
+
+        // Sync user data with server to prevent stale localStorage (Cache issue)
+        if (currentUser?.email) {
+            fetch('/api/user/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: currentUser.email }),
+                cache: 'no-store'
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.user) {
+                        useStore.getState().setCurrentUser(data.user);
+                    }
+                })
+                .catch(err => console.error('Sync failed', err));
+        }
+    }, [currentUser?.email]);
 
     const themes = [
         { id: 'light-pro', name: 'فاتح احترافي', icon: <Sun size={14} />, class: 'bg-white text-gray-800' },
