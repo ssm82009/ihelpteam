@@ -22,14 +22,14 @@ interface ColumnProps {
 }
 
 const AVAILABLE_COLORS = [
-    { id: 'blue', color: 'bg-status-plan/10', textColor: 'text-status-plan', borderColor: 'border-status-plan/20' },
-    { id: 'orange', color: 'bg-status-exec/10', textColor: 'text-status-exec', borderColor: 'border-status-exec/20' },
-    { id: 'purple', color: 'bg-status-review/10', textColor: 'text-status-review', borderColor: 'border-status-review/20' },
-    { id: 'green', color: 'bg-status-done/10', textColor: 'text-status-done', borderColor: 'border-status-done/20' },
-    { id: 'pink', color: 'bg-purple-500/10', textColor: 'text-purple-600', borderColor: 'border-purple-500/20' },
-    { id: 'red', color: 'bg-rose-500/10', textColor: 'text-rose-600', borderColor: 'border-rose-500/20' },
-    { id: 'yellow', color: 'bg-amber-500/10', textColor: 'text-amber-600', borderColor: 'border-amber-500/20' },
-    { id: 'cyan', color: 'bg-cyan-500/10', textColor: 'text-cyan-600', borderColor: 'border-cyan-500/20' },
+    { id: 'blue', color: 'bg-status-plan/10', textColor: 'text-status-plan', borderColor: 'border-status-plan/20', preview: 'bg-blue-500' },
+    { id: 'orange', color: 'bg-status-exec/10', textColor: 'text-status-exec', borderColor: 'border-status-exec/20', preview: 'bg-orange-500' },
+    { id: 'purple', color: 'bg-status-review/10', textColor: 'text-status-review', borderColor: 'border-status-review/20', preview: 'bg-purple-500' },
+    { id: 'green', color: 'bg-status-done/10', textColor: 'text-status-done', borderColor: 'border-status-done/20', preview: 'bg-emerald-500' },
+    { id: 'pink', color: 'bg-purple-500/10', textColor: 'text-purple-600', borderColor: 'border-purple-500/20', preview: 'bg-pink-500' },
+    { id: 'red', color: 'bg-rose-500/10', textColor: 'text-rose-600', borderColor: 'border-rose-500/20', preview: 'bg-rose-500' },
+    { id: 'yellow', color: 'bg-amber-500/10', textColor: 'text-amber-600', borderColor: 'border-amber-500/20', preview: 'bg-amber-500' },
+    { id: 'cyan', color: 'bg-cyan-500/10', textColor: 'text-cyan-600', borderColor: 'border-cyan-500/20', preview: 'bg-cyan-500' },
 ];
 
 export default function Column({ id, title, color, textColor, borderColor, tasks, onCreateTask, onTaskClick, isAdmin, onUpdateTitle, onUpdateColor }: ColumnProps) {
@@ -106,7 +106,7 @@ export default function Column({ id, title, color, textColor, borderColor, tasks
                                         initial={{ opacity: 0, y: 10, scale: 0.9 }}
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                         exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                                        className="absolute top-full right-0 mt-2 p-2 bg-card border border-border rounded-xl shadow-xl z-50 grid grid-cols-4 gap-2"
+                                        className="absolute top-full left-0 md:left-auto md:right-0 mt-2 p-2.5 bg-card border border-border rounded-2xl shadow-2xl z-[150] min-w-[140px] flex flex-wrap gap-2 justify-center"
                                     >
                                         {AVAILABLE_COLORS.map((c) => (
                                             <button
@@ -115,7 +115,8 @@ export default function Column({ id, title, color, textColor, borderColor, tasks
                                                     onUpdateColor(c.id);
                                                     setShowColorPicker(false);
                                                 }}
-                                                className={`w-6 h-6 rounded-full ${c.color.replace('/10', '')} border border-white/20 hover:scale-110 transition-transform`}
+                                                className={`w-5 h-5 rounded-full ${c.preview} border border-white/40 hover:scale-125 transition-all shadow-sm cursor-pointer`}
+                                                title={c.id}
                                             />
                                         ))}
                                     </motion.div>
