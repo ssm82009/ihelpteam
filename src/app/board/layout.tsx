@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
-import { LogOut, User as UserIcon, Shield, Users, Copy, Check, Palette, Moon, Sun, Monitor, Leaf, Plus } from 'lucide-react';
+import { LogOut, User as UserIcon, Shield, Users, Copy, Check, Palette, Moon, Sun, Monitor, Leaf, Plus, Layout, ChevronDown } from 'lucide-react';
 import MemberModal from '@/components/Board/MemberModal';
 import SubscriptionModal from '@/components/Board/SubscriptionModal';
 import CreateTeamModal from '@/components/Board/CreateTeamModal';
@@ -16,12 +16,63 @@ export default function BoardLayout({
     children: React.ReactNode;
 }) {
     const router = useRouter();
-    const { team, currentUser, logout, theme, setTheme, radius, setRadius, fontFamily, setFontFamily } = useStore();
+    const { team, currentUser, logout, theme, setTheme, radius, setRadius, fontFamily, setFontFamily, setTeam, setCurrentUser } = useStore();
     const [hydrated, setHydrated] = useState(false);
     const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
     const [isSubscriptionOpen, setIsSubscriptionOpen] = useState(false);
     const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
+    const [isTeamMenuOpen, setIsTeamMenuOpen] = useState(false);
+    const [userTeams, setUserTeams] = useState<any[]>([]);
+    const [isFetchingTeams, setIsFetchingTeams] = useState(false);
     const [copied, setCopied] = useState(false);
+
+    const fetchUserTeams = async () => {
+        if (!currentUser?.email) return;
+        setIsFetchingTeams(true);
+        try {
+            const res = await fetch(`/api/user/teams?email=${encodeURIComponent(currentUser.email)}`);
+            const data = await res.json();
+            if (res.ok) {
+                setUserTeams(data.teams || []);
+            }
+        } catch (error) {
+            console.error('Failed to fetch teams', error);
+        } finally {
+            setIsFetchingTeams(false);
+        }
+    };
+
+    const handleSwitchTeam = async (targetTeamId: string) => {
+        if (!currentUser?.email || targetTeamId === team?.id) return;
+
+        const loadingToast = toast.loading('جاري الانتقال للفريق...');
+        try {
+            const res = await fetch('/api/teams/switch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: currentUser.email, team_id: targetTeamId })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setCurrentUser(data.user);
+                setTeam(data.team);
+                setIsTeamMenuOpen(false);
+                toast.success(`مرحباً بك في ${data.team.name}`, { id: loadingToast });
+                // Force a small delay to ensure state is saved before any potential reload or heavy fetch
+                setTimeout(() => window.location.reload(), 500);
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (error: any) {
+            toast.error(error.message || 'فشل الانتقال للفريق', { id: loadingToast });
+        }
+    };
+
+    useEffect(() => {
+        if (hydrated && currentUser?.email) {
+            fetchUserTeams();
+        }
+    }, [hydrated, currentUser?.email]);
 
     useEffect(() => {
         setHydrated(true);
@@ -117,16 +168,75 @@ export default function BoardLayout({
             <header className="h-16 glass-panel z-50 sticky top-0 px-8 flex items-center justify-between border-b border-border shadow-sm">
                 {/* Left Side: Team Info */}
                 <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-center text-primary font-black shadow-sm group hover:scale-105 transition-transform">
-                            {team.name.charAt(0)}
-                        </div>
-                        <div className="hidden sm:block">
-                            <h1 className="font-extrabold text-foreground leading-tight">{team.name}</h1>
-                            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-tighter">
-                                لوحة التحكم <span className="text-primary/60 font-mono">(v4.0)</span>
-                            </p>
-                        </div>
+                    <div className="relative">
+                        <button
+                            onClick={() => setIsTeamMenuOpen(!isTeamMenuOpen)}
+                            className="flex items-center gap-3 bg-card/50 hover:bg-card px-4 py-2 rounded-2xl border border-border shadow-sm transition-all active:scale-95 group"
+                        >
+                            <div className="h-10 w-10 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-center text-primary font-black shadow-sm group-hover:scale-105 transition-transform">
+                                {team.name.charAt(0)}
+                            </div>
+                            <div className="hidden sm:block text-right">
+                                <div className="flex items-center gap-2">
+                                    <h1 className="font-extrabold text-foreground leading-tight text-sm">{team.name}</h1>
+                                    <ChevronDown size={14} className={`text-muted-foreground transition-transform duration-300 ${isTeamMenuOpen ? 'rotate-180' : ''}`} />
+                                </div>
+                                <p className="text-[10px] text-muted-foreground font-black uppercase tracking-tighter">
+                                    المشروع الحالي
+                                </p>
+                            </div>
+                        </button>
+
+                        {isTeamMenuOpen && (
+                            <>
+                                <div className="fixed inset-0 z-40" onClick={() => setIsTeamMenuOpen(false)} />
+                                <div className="absolute top-full right-0 mt-2 w-64 bg-card border border-border rounded-2xl shadow-2xl z-50 overflow-hidden py-2 animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="px-4 py-2 border-b border-border/50 mb-2">
+                                        <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">تبديل الفريق</span>
+                                    </div>
+
+                                    <div className="max-h-64 overflow-y-auto custom-scrollbar px-2 space-y-1">
+                                        {userTeams.map((t) => (
+                                            <button
+                                                key={t.id}
+                                                onClick={() => handleSwitchTeam(t.id)}
+                                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${t.id === team.id
+                                                        ? 'bg-primary/10 text-primary border border-primary/20'
+                                                        : 'hover:bg-muted text-foreground border border-transparent'
+                                                    }`}
+                                            >
+                                                <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs font-black ${t.id === team.id ? 'bg-primary text-white' : 'bg-muted-foreground/20 text-muted-foreground'
+                                                    }`}>
+                                                    {t.name.charAt(0)}
+                                                </div>
+                                                <div className="flex-1 text-right overflow-hidden">
+                                                    <div className="text-xs font-black truncate">{t.name}</div>
+                                                    <div className="text-[9px] opacity-60 font-mono tracking-tighter">#{t.secret_code}</div>
+                                                </div>
+                                                {t.id === team.id && <Check size={14} className="text-primary" />}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {currentUser.plan_type === 'pro' && (
+                                        <div className="mt-2 pt-2 border-t border-border/50 px-2">
+                                            <button
+                                                onClick={() => {
+                                                    setIsCreateTeamOpen(true);
+                                                    setIsTeamMenuOpen(false);
+                                                }}
+                                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-emerald-600 hover:bg-emerald-500/5 transition-all font-black text-xs"
+                                            >
+                                                <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                                                    <Plus size={16} />
+                                                </div>
+                                                <span>إنشاء فريق جديد</span>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
 
                     <div className="hidden lg:flex items-center gap-2 bg-secondary/30 hover:bg-secondary/50 px-3 py-1.5 rounded-xl border border-border transition-all cursor-pointer group" onClick={copyTeamCode}>
