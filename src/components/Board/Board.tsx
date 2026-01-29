@@ -9,6 +9,17 @@ import { Plus, Minus, Bold } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 
+const AVAILABLE_COLORS: Record<string, any> = {
+    blue: { color: 'bg-status-plan/10', textColor: 'text-status-plan', borderColor: 'border-status-plan/20' },
+    orange: { color: 'bg-status-exec/10', textColor: 'text-status-exec', borderColor: 'border-status-exec/20' },
+    purple: { color: 'bg-status-review/10', textColor: 'text-status-review', borderColor: 'border-status-review/20' },
+    green: { color: 'bg-status-done/10', textColor: 'text-status-done', borderColor: 'border-status-done/20' },
+    pink: { color: 'bg-purple-500/10', textColor: 'text-purple-600', borderColor: 'border-purple-500/20' },
+    red: { color: 'bg-rose-500/10', textColor: 'text-rose-600', borderColor: 'border-rose-500/20' },
+    yellow: { color: 'bg-amber-500/10', textColor: 'text-amber-600', borderColor: 'border-amber-500/20' },
+    cyan: { color: 'bg-cyan-500/10', textColor: 'text-cyan-600', borderColor: 'border-cyan-500/20' },
+};
+
 export default function Board() {
     const { team, tasks, setTasks, updateTask, addTask, currentUser, setTeam, fontSize, setFontSize, isBold, setIsBold } = useStore();
     const [isClient, setIsClient] = useState(false);
@@ -128,12 +139,24 @@ export default function Board() {
         setIsModalOpen(true);
     };
 
+    const getColumnStyles = (columnId: string) => {
+        const colorMap: Record<string, string> = {
+            'Plan': team?.color_plan || 'blue',
+            'Execution': team?.color_execution || 'orange',
+            'Review': team?.color_review || 'purple',
+            'Completed': team?.color_completed || 'green',
+            'Notes': team?.color_notes || 'pink'
+        };
+        const colorId = colorMap[columnId];
+        return AVAILABLE_COLORS[colorId] || AVAILABLE_COLORS.blue;
+    };
+
     const COLUMNS = [
-        { id: 'Plan', title: team?.title_plan || 'الخطة', color: 'bg-status-plan/10', textColor: 'text-status-plan', borderColor: 'border-status-plan/20' },
-        { id: 'Execution', title: team?.title_execution || 'جاري العمل', color: 'bg-status-exec/10', textColor: 'text-status-exec', borderColor: 'border-status-exec/20' },
-        { id: 'Review', title: team?.title_review || 'مراجعة', color: 'bg-status-review/10', textColor: 'text-status-review', borderColor: 'border-status-review/20' },
-        { id: 'Completed', title: team?.title_completed || 'مكتمل', color: 'bg-status-done/10', textColor: 'text-status-done', borderColor: 'border-status-done/20' },
-        { id: 'Notes', title: team?.title_notes || 'ملاحظات', color: 'bg-purple-500/10', textColor: 'text-purple-600', borderColor: 'border-purple-500/20' },
+        { id: 'Plan', title: team?.title_plan || 'الخطة', ...getColumnStyles('Plan') },
+        { id: 'Execution', title: team?.title_execution || 'جاري العمل', ...getColumnStyles('Execution') },
+        { id: 'Review', title: team?.title_review || 'مراجعة', ...getColumnStyles('Review') },
+        { id: 'Completed', title: team?.title_completed || 'مكتمل', ...getColumnStyles('Completed') },
+        { id: 'Notes', title: team?.title_notes || 'ملاحظات', ...getColumnStyles('Notes') },
     ] as const;
 
     const handleUpdateColumnTitle = async (columnId: string, newTitle: string) => {
@@ -163,6 +186,37 @@ export default function Board() {
             toast.success('تم تحديث عنوان العمود');
         } catch (e) {
             toast.error('فشل تحديث عنوان العمود');
+            fetchTeamInfo(); // Revert
+        }
+    };
+
+    const handleUpdateColumnColor = async (columnId: string, colorId: string) => {
+        if (!isAdmin || !team?.id) return;
+
+        const fieldMap: Record<string, string> = {
+            'Plan': 'color_plan',
+            'Execution': 'color_execution',
+            'Review': 'color_review',
+            'Completed': 'color_completed',
+            'Notes': 'color_notes'
+        };
+
+        const fieldName = fieldMap[columnId];
+        if (!fieldName) return;
+
+        // Optimistic Update
+        setTeam({ ...team, [fieldName]: colorId });
+
+        try {
+            const res = await fetch('/api/teams/update', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: team.id, [fieldName]: colorId })
+            });
+            if (!res.ok) throw new Error();
+            toast.success('تم تحديث لون العمود');
+        } catch (e) {
+            toast.error('فشل تحديث لون العمود');
             fetchTeamInfo(); // Revert
         }
     };
@@ -232,6 +286,7 @@ export default function Board() {
                                 onTaskClick={openTask}
                                 isAdmin={isAdmin}
                                 onUpdateTitle={(newTitle) => handleUpdateColumnTitle(column.id, newTitle)}
+                                onUpdateColor={(colorId) => handleUpdateColumnColor(column.id, colorId)}
                             />
                         ))}
                     </DragDropContext>

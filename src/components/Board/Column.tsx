@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Droppable } from '@hello-pangea/dnd';
 import { Task, useStore } from '@/lib/store';
 import TaskCard from './TaskCard';
-import { Plus, X, Edit2 } from 'lucide-react';
+import { Plus, X, Edit2, Palette } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ColumnProps {
@@ -18,14 +18,27 @@ interface ColumnProps {
     onTaskClick: (task: Task) => void;
     isAdmin: boolean;
     onUpdateTitle: (newTitle: string) => void;
+    onUpdateColor: (colorId: string) => void;
 }
 
-export default function Column({ id, title, color, textColor, borderColor, tasks, onCreateTask, onTaskClick, isAdmin, onUpdateTitle }: ColumnProps) {
+const AVAILABLE_COLORS = [
+    { id: 'blue', color: 'bg-status-plan/10', textColor: 'text-status-plan', borderColor: 'border-status-plan/20' },
+    { id: 'orange', color: 'bg-status-exec/10', textColor: 'text-status-exec', borderColor: 'border-status-exec/20' },
+    { id: 'purple', color: 'bg-status-review/10', textColor: 'text-status-review', borderColor: 'border-status-review/20' },
+    { id: 'green', color: 'bg-status-done/10', textColor: 'text-status-done', borderColor: 'border-status-done/20' },
+    { id: 'pink', color: 'bg-purple-500/10', textColor: 'text-purple-600', borderColor: 'border-purple-500/20' },
+    { id: 'red', color: 'bg-rose-500/10', textColor: 'text-rose-600', borderColor: 'border-rose-500/20' },
+    { id: 'yellow', color: 'bg-amber-500/10', textColor: 'text-amber-600', borderColor: 'border-amber-500/20' },
+    { id: 'cyan', color: 'bg-cyan-500/10', textColor: 'text-cyan-600', borderColor: 'border-cyan-500/20' },
+];
+
+export default function Column({ id, title, color, textColor, borderColor, tasks, onCreateTask, onTaskClick, isAdmin, onUpdateTitle, onUpdateColor }: ColumnProps) {
     const { fontSize } = useStore();
     const [isAdding, setIsAdding] = useState(false);
     const [newTaskTitle, setNewTaskTitle] = useState('');
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [editedTitle, setEditedTitle] = useState(title);
+    const [showColorPicker, setShowColorPicker] = useState(false);
 
     // Calculate dynamic font size for header (base it on the global fontSize + 4px for emphasis)
     const headerFontSize = fontSize + 4;
@@ -79,6 +92,37 @@ export default function Column({ id, title, color, textColor, borderColor, tasks
                     <span className={`text-[11px] ${color} bg-background/80 ${textColor} px-2 py-0.5 rounded-lg font-black shadow-sm`}>
                         {tasks.length}
                     </span>
+                    {isAdmin && (
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowColorPicker(!showColorPicker)}
+                                className={`p-1.5 hover:bg-background/40 rounded-lg transition-colors ${textColor} opacity-60 hover:opacity-100`}
+                            >
+                                <Palette size={14} />
+                            </button>
+                            <AnimatePresence>
+                                {showColorPicker && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                                        className="absolute top-full right-0 mt-2 p-2 bg-card border border-border rounded-xl shadow-xl z-50 grid grid-cols-4 gap-2"
+                                    >
+                                        {AVAILABLE_COLORS.map((c) => (
+                                            <button
+                                                key={c.id}
+                                                onClick={() => {
+                                                    onUpdateColor(c.id);
+                                                    setShowColorPicker(false);
+                                                }}
+                                                className={`w-6 h-6 rounded-full ${c.color.replace('/10', '')} border border-white/20 hover:scale-110 transition-transform`}
+                                            />
+                                        ))}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    )}
                     {isAdmin && (
                         <button
                             onClick={() => setIsAdding(true)}
@@ -160,7 +204,7 @@ export default function Column({ id, title, color, textColor, borderColor, tasks
                             className="w-full py-4 flex items-center justify-center gap-2 text-muted-foreground hover:text-primary hover:bg-card rounded-xl border-2 border-dashed border-border/50 hover:border-primary/50 transition-all font-bold text-sm"
                         >
                             <Plus size={18} />
-                            <span>إضافة مهمة</span>
+                            <span>إضافة</span>
                         </button>
                     )
                 )}

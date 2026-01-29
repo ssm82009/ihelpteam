@@ -12,6 +12,11 @@ export interface Team {
     title_completed?: string;
     title_review?: string;
     title_notes?: string;
+    color_plan?: string;
+    color_execution?: string;
+    color_review?: string;
+    color_completed?: string;
+    color_notes?: string;
 }
 
 export interface User {
