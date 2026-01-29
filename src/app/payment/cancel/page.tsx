@@ -1,8 +1,14 @@
 'use client';
 import { XCircle, RefreshCcw, Home } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Suspense } from 'react';
 
-export default function PaymentCancel() {
+function CancelContent() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const returnPath = searchParams.get('returnPath') || '/';
+
     return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4" dir="rtl">
             <div className="max-w-md w-full bg-white rounded-[32px] shadow-2xl p-10 text-center border border-slate-100">
@@ -19,7 +25,7 @@ export default function PaymentCancel() {
 
                 <div className="grid grid-cols-1 gap-3">
                     <button
-                        onClick={() => window.history.back()}
+                        onClick={() => router.push(returnPath)}
                         className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-lg active:scale-[0.98]"
                     >
                         <RefreshCcw size={20} />
@@ -40,5 +46,13 @@ export default function PaymentCancel() {
                 </p>
             </div>
         </div>
+    );
+}
+
+export default function PaymentCancel() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center font-bold text-slate-400">جاري التحميل...</div>}>
+            <CancelContent />
+        </Suspense>
     );
 }

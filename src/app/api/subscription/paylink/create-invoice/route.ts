@@ -5,7 +5,7 @@ import { getSiteSettings } from '@/lib/settings';
 
 export async function POST(request: Request) {
     try {
-        const { email, username, planType } = await request.json();
+        const { email, username, planType, returnUrl } = await request.json(); // Accept returnUrl
 
         // Fetch plan from DB
         const planResult = await db.execute({
@@ -20,6 +20,7 @@ export async function POST(request: Request) {
         const plan: any = planResult.rows[0];
         const siteSettings = await getSiteSettings();
         const baseUrl = siteSettings.next_public_base_url || process.env.NEXT_PUBLIC_BASE_URL || 'https://ihelp.team';
+        const targetReturnUrl = returnUrl || '/board';
 
         // Fetch payment settings to get user-defined cancel URL
         const paymentSettingsResult = await db.execute('SELECT value FROM payment_settings WHERE key = "payment_cancel_url"');
@@ -29,6 +30,10 @@ export async function POST(request: Request) {
             cancelUrl = userCancelUrl.startsWith('http') ? userCancelUrl : `${baseUrl}/${userCancelUrl.replace(/^\//, '')}`;
         }
 
+        // Append returnPath to cancelUrl
+        const separator = cancelUrl.includes('?') ? '&' : '?';
+        cancelUrl = `${cancelUrl}${separator}returnPath=${encodeURIComponent(targetReturnUrl)}`;
+
         const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
         const invoice = await PaylinkService.createInvoice({
@@ -36,7 +41,7 @@ export async function POST(request: Request) {
             clientName: username || email,
             clientEmail: email,
             clientMobile: '0500000000',
-            callbackUrl: `${baseUrl}/api/subscription/paylink/callback?orderId=${orderNumber}&email=${encodeURIComponent(email)}&plan=${planType}`,
+            callbackUrl: `${baseUrl}/api/subscription/paylink/callback?orderId=${orderNumber}&email=${encodeURIComponent(email)}&plan=${planType}&returnPath=${encodeURIComponent(targetReturnUrl)}`,
             cancelUrl: cancelUrl,
             orderNumber: orderNumber,
             products: [

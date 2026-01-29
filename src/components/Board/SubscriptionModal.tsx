@@ -46,7 +46,8 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
                 body: JSON.stringify({
                     email: currentUser.email,
                     username: currentUser.username,
-                    planType: planId
+                    planType: planId,
+                    returnUrl: window.location.pathname // Send current location
                 }),
             });
 

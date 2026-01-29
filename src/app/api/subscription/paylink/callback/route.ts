@@ -7,9 +7,10 @@ export async function GET(request: Request) {
     const transactionNo = searchParams.get('transactionNo');
     const email = searchParams.get('email');
     const planType = searchParams.get('plan');
+    const returnPath = searchParams.get('returnPath') || '/board';
 
     if (!transactionNo || !email || !planType) {
-        return NextResponse.redirect(new URL('/?error=invalid_callback', request.url));
+        return NextResponse.redirect(new URL(`/?error=invalid_callback&returnPath=${encodeURIComponent(returnPath)}`, request.url));
     }
 
     try {
@@ -50,6 +51,10 @@ export async function GET(request: Request) {
                 successUrl = userSuccessUrl.startsWith('http') ? userSuccessUrl : `${baseUrl}/${userSuccessUrl.replace(/^\//, '')}`;
             }
 
+            // Append returnPath
+            const separator = successUrl.includes('?') ? '&' : '?';
+            successUrl = `${successUrl}${separator}returnPath=${encodeURIComponent(returnPath)}`;
+
             // Redirect to the success page
             return NextResponse.redirect(new URL(successUrl, request.url));
         } else {
@@ -66,6 +71,10 @@ export async function GET(request: Request) {
                 const userCancelUrl = paymentSettingsResult.rows[0].value as string;
                 cancelUrl = userCancelUrl.startsWith('http') ? userCancelUrl : `${baseUrl}/${userCancelUrl.replace(/^\//, '')}`;
             }
+
+            // Append returnPath
+            const separator = cancelUrl.includes('?') ? '&' : '?';
+            cancelUrl = `${cancelUrl}${separator}returnPath=${encodeURIComponent(returnPath)}`;
 
             return NextResponse.redirect(new URL(cancelUrl, request.url));
         }

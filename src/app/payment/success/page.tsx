@@ -9,20 +9,22 @@ function SuccessContent() {
     const router = useRouter();
     const [countdown, setCountdown] = useState(5);
 
+    const returnPath = searchParams.get('returnPath') || '/';
+
     useEffect(() => {
         const timer = setInterval(() => {
             setCountdown((prev) => prev - 1);
         }, 1000);
 
         const redirect = setTimeout(() => {
-            router.push('/');
+            router.push(returnPath);
         }, 5000);
 
         return () => {
             clearInterval(timer);
             clearTimeout(redirect);
         };
-    }, [router]);
+    }, [router, returnPath]);
 
     return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4" dir="rtl">
@@ -40,14 +42,14 @@ function SuccessContent() {
 
                 <div className="bg-slate-50 rounded-2xl p-4 mb-8 flex items-center justify-center gap-3 text-sm text-slate-500 font-bold">
                     <Loader2 size={18} className="animate-spin text-blue-500" />
-                    سيتم تحويلك للرئيسية خلال {countdown} ثواني...
+                    سيتم تحويلك تلقائياً خلال {countdown} ثواني...
                 </div>
 
                 <Link
-                    href="/"
+                    href={returnPath}
                     className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg active:scale-[0.98]"
                 >
-                    الذهاب للرئيسية فوراً
+                    العودة الآن
                     <ArrowRight size={20} className="rotate-180" />
                 </Link>
             </div>
