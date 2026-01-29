@@ -21,6 +21,14 @@ export async function POST(request: Request) {
         const siteSettings = await getSiteSettings();
         const baseUrl = siteSettings.next_public_base_url || process.env.NEXT_PUBLIC_BASE_URL || 'https://ihelp.team';
 
+        // Fetch payment settings to get user-defined cancel URL
+        const paymentSettingsResult = await db.execute('SELECT value FROM payment_settings WHERE key = "payment_cancel_url"');
+        let cancelUrl = `${baseUrl}/payment/cancel`;
+        if (paymentSettingsResult.rows.length > 0 && paymentSettingsResult.rows[0].value) {
+            const userCancelUrl = paymentSettingsResult.rows[0].value as string;
+            cancelUrl = userCancelUrl.startsWith('http') ? userCancelUrl : `${baseUrl}/${userCancelUrl.replace(/^\//, '')}`;
+        }
+
         const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
         const invoice = await PaylinkService.createInvoice({
@@ -29,7 +37,7 @@ export async function POST(request: Request) {
             clientEmail: email,
             clientMobile: '0500000000',
             callbackUrl: `${baseUrl}/api/subscription/paylink/callback?orderId=${orderNumber}&email=${encodeURIComponent(email)}&plan=${planType}`,
-            cancelUrl: `${baseUrl}/payment/cancel`,
+            cancelUrl: cancelUrl,
             orderNumber: orderNumber,
             products: [
                 {

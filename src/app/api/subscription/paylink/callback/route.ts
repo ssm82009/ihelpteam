@@ -38,11 +38,36 @@ export async function GET(request: Request) {
                 args: [planType, subscription_end, email],
             });
 
-            // Redirect to a success page
-            return NextResponse.redirect(new URL('/payment/success', request.url));
+            // Fetch settings for redirection
+            const siteSettingsResult = await db.execute('SELECT value FROM site_settings WHERE key = "next_public_base_url"');
+            const paymentSettingsResult = await db.execute('SELECT value FROM payment_settings WHERE key = "payment_callback_url"');
+
+            const baseUrl = siteSettingsResult.rows[0]?.value as string || process.env.NEXT_PUBLIC_BASE_URL || new URL(request.url).origin;
+            let successUrl = `${baseUrl}/payment/success`;
+
+            if (paymentSettingsResult.rows.length > 0 && paymentSettingsResult.rows[0].value) {
+                const userSuccessUrl = paymentSettingsResult.rows[0].value as string;
+                successUrl = userSuccessUrl.startsWith('http') ? userSuccessUrl : `${baseUrl}/${userSuccessUrl.replace(/^\//, '')}`;
+            }
+
+            // Redirect to the success page
+            return NextResponse.redirect(new URL(successUrl, request.url));
         } else {
             console.warn('Payment not completed:', status.orderStatus);
-            return NextResponse.redirect(new URL('/payment/cancel', request.url));
+
+            // Fetch cancel URL from settings
+            const siteSettingsResult = await db.execute('SELECT value FROM site_settings WHERE key = "next_public_base_url"');
+            const paymentSettingsResult = await db.execute('SELECT value FROM payment_settings WHERE key = "payment_cancel_url"');
+
+            const baseUrl = siteSettingsResult.rows[0]?.value as string || process.env.NEXT_PUBLIC_BASE_URL || new URL(request.url).origin;
+            let cancelUrl = `${baseUrl}/payment/cancel`;
+
+            if (paymentSettingsResult.rows.length > 0 && paymentSettingsResult.rows[0].value) {
+                const userCancelUrl = paymentSettingsResult.rows[0].value as string;
+                cancelUrl = userCancelUrl.startsWith('http') ? userCancelUrl : `${baseUrl}/${userCancelUrl.replace(/^\//, '')}`;
+            }
+
+            return NextResponse.redirect(new URL(cancelUrl, request.url));
         }
     } catch (error) {
         console.error('Error in Paylink callback:', error);
