@@ -65,7 +65,6 @@ export default function Column({ id, title, color, textColor, borderColor, tasks
                         </form>
                     ) : (
                         <div className="flex items-center gap-2 group/title cursor-pointer w-full" onClick={() => isAdmin && setIsEditingTitle(true)}>
-                            <div className={`w-3 h-3 rounded-full ${color.replace('/10', '')} mr-1`} />
                             <h2
                                 className="font-black text-foreground tracking-wide"
                                 style={{ fontSize: `${headerFontSize}px` }}
