@@ -10,7 +10,7 @@ export const PLANS = {
         name: 'اشتراك مساعد الفريق - سنوي',
         maxTeams: 10,
         maxMembers: 10,
-        price: 199,
+        price: 9,
         duration: '1 year',
     }
 } as const;
