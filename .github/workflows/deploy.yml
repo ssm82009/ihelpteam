@@ -55,20 +55,15 @@ jobs:
             npm run build
             
             echo "=== Step 7: Setup Standalone for Production ==="
-            # 1. إعداد مجلد standalone للعمل عبر PM2
+            # نسخ الملفات المطلوبة للـ Standalone
             mkdir -p .next/standalone/.next/static
             cp -r .next/static/* .next/standalone/.next/static/
             cp -r public .next/standalone/public
             cp .env .next/standalone/.env
-            
-            # 2. إعداد مجلد الـ root لخدمة الملفات عبر Nginx مباشرة (حل مشكلة الـ 404)
+
+            # توفير نسخة من ملفات الـ static في المسار الذي يتوقعه Nginx
             mkdir -p _next/static
             cp -r .next/static/* _next/static/
-            cp -r public/* . 2>/dev/null || true
-            
-            # 3. ضبط الأذونات لمستخدم النظاام www (مهم جداً في aaPanel)
-            chown -R www:www /www/wwwroot/ihelp.team
-            chmod -R 755 /www/wwwroot/ihelp.team
             
             echo "=== Step 8: Create ecosystem.config.js ==="
             cat <<EOF > .next/standalone/ecosystem.config.js
@@ -78,7 +73,7 @@ jobs:
                 script: 'server.js',
                 cwd: '/www/wwwroot/ihelp.team/.next/standalone',
                 env: {
-                  PORT: 3010,
+                  PORT: 3011,
                   NODE_ENV: 'production',
                   HOSTNAME: '0.0.0.0'
                 }
@@ -88,9 +83,8 @@ jobs:
             
             echo "=== Step 9: Start PM2 ==="
             cd .next/standalone
-            # تشغيل PM2 كمستخدم www لضمان الأمان وتوافق الملفات
-            sudo -u www pm2 delete ihelp-team || true
-            sudo -u www pm2 start ecosystem.config.js
-            sudo -u www pm2 save
+            pm2 delete ihelp-team || true
+            pm2 start ecosystem.config.js
+            pm2 save
             
             echo "=== Deployment Complete! ==="
