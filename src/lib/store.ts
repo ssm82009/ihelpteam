@@ -11,6 +11,7 @@ export interface Team {
     title_execution?: string;
     title_completed?: string;
     title_review?: string;
+    title_notes?: string;
 }
 
 export interface User {
@@ -25,7 +26,7 @@ export interface User {
 export interface Task {
     id: string;
     title: string;
-    status: 'Plan' | 'Execution' | 'Completed' | 'Review';
+    status: 'Plan' | 'Execution' | 'Completed' | 'Review' | 'Notes';
     image_data?: string;
     team_id: string;
     created_at?: string;

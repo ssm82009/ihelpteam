@@ -133,6 +133,7 @@ export default function Board() {
         { id: 'Execution', title: team?.title_execution || 'جاري العمل', color: 'bg-status-exec/10', textColor: 'text-status-exec', borderColor: 'border-status-exec/20' },
         { id: 'Review', title: team?.title_review || 'مراجعة', color: 'bg-status-review/10', textColor: 'text-status-review', borderColor: 'border-status-review/20' },
         { id: 'Completed', title: team?.title_completed || 'مكتمل', color: 'bg-status-done/10', textColor: 'text-status-done', borderColor: 'border-status-done/20' },
+        { id: 'Notes', title: team?.title_notes || 'ملاحظات', color: 'bg-purple-500/10', textColor: 'text-purple-600', borderColor: 'border-purple-500/20' },
     ] as const;
 
     const handleUpdateColumnTitle = async (columnId: string, newTitle: string) => {
@@ -142,7 +143,8 @@ export default function Board() {
             'Plan': 'title_plan',
             'Execution': 'title_execution',
             'Completed': 'title_completed',
-            'Review': 'title_review'
+            'Review': 'title_review',
+            'Notes': 'title_notes'
         };
 
         const fieldName = fieldMap[columnId];
@@ -168,7 +170,7 @@ export default function Board() {
     if (!isClient) {
         return (
             <div className="flex p-6 gap-6 h-[calc(100vh-80px)] overflow-x-auto">
-                {[1, 2, 3, 4].map(i => (
+                {[1, 2, 3, 4, 5].map(i => (
                     <div key={i} className="min-w-[320px] bg-muted/50 rounded-2xl animate-pulse"></div>
                 ))}
             </div>
