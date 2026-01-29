@@ -5,19 +5,31 @@ import bcrypt from 'bcryptjs';
 
 export async function POST(request: Request) {
     try {
-        const { name, description, admin_name, admin_email, admin_password } = await request.json();
+        const { name, description, admin_name, admin_email, admin_password, is_existing_user } = await request.json();
 
-        if (!name || !admin_name || !admin_email || !admin_password) {
+        if (!name || !admin_name || !admin_email) {
             return NextResponse.json({ error: 'Team name and admin details are required' }, { status: 400 });
         }
 
-        // 1. Check existing plan limits for this email
+        // 1. Check existing user/plan for this email
         const existingUserResult = await db.execute({
-            sql: 'SELECT plan_type FROM users WHERE email = ? ORDER BY created_at DESC LIMIT 1',
+            sql: 'SELECT id, password, plan_type, subscription_end FROM users WHERE email = ? ORDER BY created_at DESC LIMIT 1',
             args: [admin_email],
         });
 
-        const planType = (existingUserResult.rows[0]?.plan_type as any) || 'free';
+        const existingUser = existingUserResult.rows[0];
+        const planType = (existingUser?.plan_type as any) || 'free';
+
+        // Check password if it's a new user or if password provided doesn't match existing (if we want that)
+        // For simplicity and internal use, if is_existing_user is true, we use the old password
+        let finalPassword = admin_password;
+        if (is_existing_user && existingUser) {
+            finalPassword = existingUser.password as string;
+        } else if (!admin_password) {
+            return NextResponse.json({ error: 'كلمة المرور مطلوبة' }, { status: 400 });
+        } else {
+            finalPassword = await bcrypt.hash(admin_password, 10);
+        }
 
         // Count how many teams this user (by email) is admin of
         const ownedTeamsResult = await db.execute({
@@ -44,13 +56,12 @@ export async function POST(request: Request) {
             args: [teamId, name, description || '', secret_code, userId],
         });
 
-        // 2. Create Admin User
-        const hashedPassword = await bcrypt.hash(admin_password, 10);
-        const subEnd = existingUserResult.rows[0]?.subscription_end || null;
+        // 2. Create Admin User (scopced to this team)
+        const subEnd = existingUser?.subscription_end || null;
 
         await db.execute({
             sql: 'INSERT INTO users (id, username, email, password, team_id, plan_type, subscription_end) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            args: [userId, admin_name, admin_email, hashedPassword, teamId, planType, subEnd],
+            args: [userId, admin_name, admin_email, finalPassword, teamId, planType, subEnd],
         });
 
         return NextResponse.json({
