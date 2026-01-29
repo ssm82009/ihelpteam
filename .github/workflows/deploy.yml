@@ -103,7 +103,7 @@ jobs:
                 script: 'server.js',
                 interpreter: 'node',
                 env: {
-                  PORT: 3000,
+                  PORT: 3010,
                   NODE_ENV: 'production'
                 }
               }]
