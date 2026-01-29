@@ -176,7 +176,7 @@ export default function BoardLayout({
 
     return (
         <div className="min-h-screen flex flex-col transition-colors duration-300">
-            <header className="h-20 glass-panel z-50 sticky top-0 border-b border-border shadow-md px-4 overflow-hidden">
+            <header className="h-20 glass-panel z-[110] sticky top-0 border-b border-border shadow-md px-4">
                 <div className="max-w-[1600px] mx-auto h-full flex items-center justify-between">
                     {/* Left Side: Team & Projects */}
                     <div className="flex items-center gap-3">
@@ -202,8 +202,8 @@ export default function BoardLayout({
 
                             {isTeamMenuOpen && (
                                 <>
-                                    <div className="fixed inset-0 z-40" onClick={() => setIsTeamMenuOpen(false)} />
-                                    <div className="absolute top-[calc(100%+12px)] right-0 w-72 bg-card border border-border rounded-[28px] shadow-2xl z-50 overflow-hidden py-3 animate-in fade-in slide-in-from-top-3 duration-300">
+                                    <div className="fixed inset-0 z-[115]" onClick={() => setIsTeamMenuOpen(false)} />
+                                    <div className="absolute top-[calc(100%+12px)] right-0 w-72 bg-card border border-border rounded-[28px] shadow-2xl z-[120] overflow-hidden py-3 animate-in fade-in slide-in-from-top-3 duration-300">
                                         <div className="px-6 py-2 border-b border-border/50 mb-3 flex items-center justify-between">
                                             <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest font-tajawal">تبديل المشروع</span>
                                             <Layout size={12} className="text-muted-foreground/40" />
@@ -303,8 +303,8 @@ export default function BoardLayout({
 
                                 {isThemeMenuOpen && (
                                     <>
-                                        <div className="fixed inset-0 z-40" onClick={() => setIsThemeMenuOpen(false)} />
-                                        <div className="absolute left-0 mt-3 w-56 bg-card border border-border rounded-[28px] shadow-2xl z-50 overflow-hidden py-1 animate-in fade-in slide-in-from-right-4 duration-300 border-t-4 border-t-primary">
+                                        <div className="fixed inset-0 z-[115]" onClick={() => setIsThemeMenuOpen(false)} />
+                                        <div className="absolute left-0 mt-3 w-56 bg-card border border-border rounded-[28px] shadow-2xl z-[120] overflow-hidden py-1 animate-in fade-in slide-in-from-right-4 duration-300 border-t-4 border-t-primary">
                                             {/* Themes Section */}
                                             <div className="px-5 py-3 border-b border-border/50 mb-1">
                                                 <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest font-tajawal">مظهر النظام</span>
