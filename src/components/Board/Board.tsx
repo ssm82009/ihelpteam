@@ -212,24 +212,26 @@ export default function Board() {
                 </div>
             </div>
 
-            <div className="flex px-4 md:px-8 py-4 md:py-8 gap-4 md:gap-6 h-full items-start min-w-max">
-                <DragDropContext onDragEnd={onDragEnd}>
-                    {COLUMNS.map((column) => (
-                        <Column
-                            key={column.id}
-                            id={column.id}
-                            title={column.title}
-                            color={column.color}
-                            textColor={column.textColor}
-                            borderColor={column.borderColor}
-                            tasks={column.id === 'Plan' ? tasks : tasks.filter((t) => t.status === column.id)}
-                            onCreateTask={(title) => handleCreateTask(column.id as Task['status'], title)}
-                            onTaskClick={openTask}
-                            isAdmin={isAdmin}
-                            onUpdateTitle={(newTitle) => handleUpdateColumnTitle(column.id, newTitle)}
-                        />
-                    ))}
-                </DragDropContext>
+            <div className="max-w-[1700px] mx-auto h-full px-4 md:px-8 py-4 md:py-8 overflow-x-auto custom-scrollbar">
+                <div className="flex gap-4 md:gap-8 h-full items-start">
+                    <DragDropContext onDragEnd={onDragEnd}>
+                        {COLUMNS.map((column) => (
+                            <Column
+                                key={column.id}
+                                id={column.id}
+                                title={column.title}
+                                color={column.color}
+                                textColor={column.textColor}
+                                borderColor={column.borderColor}
+                                tasks={column.id === 'Plan' ? tasks : tasks.filter((t) => t.status === column.id)}
+                                onCreateTask={(title) => handleCreateTask(column.id as Task['status'], title)}
+                                onTaskClick={openTask}
+                                isAdmin={isAdmin}
+                                onUpdateTitle={(newTitle) => handleUpdateColumnTitle(column.id, newTitle)}
+                            />
+                        ))}
+                    </DragDropContext>
+                </div>
             </div>
 
             {isModalOpen && selectedTask && (

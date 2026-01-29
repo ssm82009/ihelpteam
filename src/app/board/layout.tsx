@@ -30,7 +30,7 @@ export default function BoardLayout({
         if (!currentUser?.email) return;
         setIsFetchingTeams(true);
         try {
-            const res = await fetch(`/api/user/teams?email=${encodeURIComponent(currentUser.email.toLowerCase())}`);
+            const res = await fetch(`/api/user/teams?email=${encodeURIComponent(currentUser.email)}`);
             const data = await res.json();
             if (res.ok) {
                 setUserTeams(data.teams || []);
@@ -53,7 +53,7 @@ export default function BoardLayout({
             const res = await fetch('/api/teams/switch', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: currentUser.email.toLowerCase(), team_id: targetTeamId })
+                body: JSON.stringify({ email: currentUser.email, team_id: targetTeamId })
             });
             const data = await res.json();
             if (res.ok) {
