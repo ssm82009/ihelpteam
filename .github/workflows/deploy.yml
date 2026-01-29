@@ -24,6 +24,8 @@ jobs:
             pm2 delete all || true
             
             echo "=== Step 2: Delete and recreate directory ==="
+            # Remove immutable attribute from protected files (aaPanel creates .user.ini with immutable flag)
+            chattr -i /www/wwwroot/ihelp.team/.user.ini 2>/dev/null || true
             rm -rf /www/wwwroot/ihelp.team
             mkdir -p /www/wwwroot/ihelp.team
             
