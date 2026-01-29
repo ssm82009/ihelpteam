@@ -10,7 +10,7 @@ export default function AdminPlans() {
 
     const fetchPlans = () => {
         setLoading(true);
-        fetch('/api/admin/plans')
+        fetch('/api/admin/plans', { cache: 'no-store' })
             .then(res => res.json())
             .then((data: any) => {
                 setPlans(data);

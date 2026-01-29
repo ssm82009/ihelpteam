@@ -16,7 +16,7 @@ export default function AdminSettings() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch('/api/admin/settings?type=site')
+        fetch('/api/admin/settings?type=site', { cache: 'no-store' })
             .then(res => res.json())
             .then((data: any) => {
                 if (!data.error) setSettings(prev => ({ ...prev, ...data }));

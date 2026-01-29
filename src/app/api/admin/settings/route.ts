@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { isAdmin } from '@/lib/admin';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') || 'site'; // 'site' or 'payment'
@@ -10,7 +12,7 @@ export async function GET(request: Request) {
     try {
         const result = await db.execute(`SELECT * FROM ${table}`);
         const settings: Record<string, string> = {};
-        result.rows.forEach(row => {
+        result.rows.forEach((row: any) => {
             settings[row.key as string] = row.value as string;
         });
         return NextResponse.json(settings);

@@ -18,7 +18,7 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
 
     useEffect(() => {
         if (isOpen) {
-            fetch('/api/admin/plans')
+            fetch('/api/admin/plans', { cache: 'no-store' })
                 .then(res => res.json())
                 .then((data: any) => {
                     setPlans(data);

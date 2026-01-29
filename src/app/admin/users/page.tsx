@@ -10,7 +10,7 @@ export default function AdminUsers() {
 
     const fetchUsers = () => {
         setLoading(true);
-        fetch('/api/admin/stats')
+        fetch('/api/admin/stats', { cache: 'no-store' })
             .then(res => res.json())
             .then((data: any) => {
                 setUsers(data.recentUsers);

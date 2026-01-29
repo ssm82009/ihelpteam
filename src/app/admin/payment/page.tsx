@@ -14,7 +14,7 @@ export default function AdminPayment() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch('/api/admin/settings?type=payment')
+        fetch('/api/admin/settings?type=payment', { cache: 'no-store' })
             .then(res => res.json())
             .then((data: any) => {
                 if (!data.error) setSettings(prev => ({ ...prev, ...data }));
