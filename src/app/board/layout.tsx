@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import Footer from '@/components/Footer';
-import { Shield, ChevronDown, Check, Layout, Plus, Star, CreditCard, Users, Palette, Sun, Moon, Copy, LogOut, Camera, User as UserIcon, Headset, Monitor, Leaf } from 'lucide-react';
+import { Shield, ChevronDown, Check, Layout, Plus, Star, CreditCard, Users, Palette, Sun, Moon, Copy, LogOut, Camera, User as UserIcon, Headset, Monitor, Leaf, Lock } from 'lucide-react';
 import MemberModal from '@/components/Board/MemberModal';
 import SubscriptionModal from '@/components/Board/SubscriptionModal';
 import CreateTeamModal from '@/components/Board/CreateTeamModal';
@@ -296,8 +296,8 @@ export default function BoardLayout({
                                         ))}
                                     </div>
 
-                                    {currentUser.plan_type === 'pro' && (
-                                        <div className="mt-3 pt-3 border-t border-border/50 px-3">
+                                    <div className="mt-3 pt-3 border-t border-border/50 px-3">
+                                        {currentUser.plan_type === 'pro' ? (
                                             <button
                                                 onClick={() => {
                                                     setIsCreateTeamOpen(true);
@@ -310,8 +310,25 @@ export default function BoardLayout({
                                                 </div>
                                                 <span>إنشاء فريق جديد</span>
                                             </button>
-                                        </div>
-                                    )}
+                                        ) : (
+                                            <button
+                                                onClick={() => {
+                                                    setIsSubscriptionOpen(true);
+                                                    setIsTeamMenuOpen(false);
+                                                }}
+                                                className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-muted-foreground bg-muted/50 hover:bg-muted transition-all font-black text-xs border border-border group"
+                                            >
+                                                <div className="h-9 w-9 rounded-xl bg-muted-foreground/10 flex items-center justify-center relative">
+                                                    <Plus size={18} className="opacity-40" />
+                                                    <Lock size={12} className="absolute bottom-0 right-0 text-amber-600" />
+                                                </div>
+                                                <div className="flex flex-col text-right">
+                                                    <span>إنشاء فريق جديد</span>
+                                                    <span className="text-[9px] text-amber-600 font-bold mt-0.5">يتطلب الباقة الاحترافية ✨</span>
+                                                </div>
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>
