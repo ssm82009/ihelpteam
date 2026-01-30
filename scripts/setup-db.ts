@@ -28,10 +28,16 @@ async function main() {
       description TEXT,
       secret_code TEXT UNIQUE NOT NULL,
       admin_id TEXT,
-      title_plan TEXT,
-      title_execution TEXT,
-      title_completed TEXT,
-      title_review TEXT
+      title_plan TEXT DEFAULT "الخطة",
+      title_execution TEXT DEFAULT "التنفيذ",
+      title_completed TEXT DEFAULT "مكتمل",
+      title_review TEXT DEFAULT "مراجعة",
+      title_notes TEXT DEFAULT "ملاحظات",
+      color_plan TEXT DEFAULT "blue",
+      color_execution TEXT DEFAULT "orange",
+      color_completed TEXT DEFAULT "green",
+      color_review TEXT DEFAULT "purple",
+      color_notes TEXT DEFAULT "pink"
     );`,
 
     `CREATE TABLE IF NOT EXISTS users (
@@ -44,7 +50,7 @@ async function main() {
     `CREATE TABLE IF NOT EXISTS tasks (
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
-      status TEXT NOT NULL CHECK(status IN ('Plan', 'Execution', 'Completed', 'Review')),
+      status TEXT NOT NULL CHECK(status IN ('Plan', 'Execution', 'Completed', 'Review', 'Notes')),
       image_data TEXT,
       team_id TEXT NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

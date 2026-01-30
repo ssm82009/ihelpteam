@@ -11,9 +11,10 @@ interface TaskCardProps {
     onClick: () => void;
     isAdmin: boolean;
     isShadow?: boolean;
+    team: any;
 }
 
-const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({ task, index, onClick, isAdmin, isShadow }, ref) => {
+const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({ task, index, onClick, isAdmin, isShadow, team }, ref) => {
     const { updateTask: updateStoreTask, fontSize, isBold } = useStore();
     const [isEditing, setIsEditing] = useState(false);
     const [editedTitle, setEditedTitle] = useState(task.title);
@@ -130,11 +131,13 @@ const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({ task, index, onCli
                     <span className="hidden">#{task.id.slice(0, 6).toUpperCase()}</span>
                     <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${task.status === 'Plan' ? 'bg-status-plan/20 text-status-plan' :
                         task.status === 'Execution' ? 'bg-status-exec/20 text-status-exec' :
-                            task.status === 'Review' ? 'bg-status-review/20 text-status-review' : 'bg-status-done/20 text-status-done'
+                            task.status === 'Review' ? 'bg-status-review/20 text-status-review' :
+                                task.status === 'Notes' ? 'bg-purple-500/20 text-purple-600' : 'bg-status-done/20 text-status-done'
                         }`}>
-                        {task.status === 'Plan' ? 'الخطة' :
-                            task.status === 'Execution' ? 'جاري' :
-                                task.status === 'Review' ? 'مراجعة' : 'مكتمل'}
+                        {task.status === 'Plan' ? (team?.title_plan || 'الخطة') :
+                            task.status === 'Execution' ? (team?.title_execution || 'جاري') :
+                                task.status === 'Review' ? (team?.title_review || 'مراجعة') :
+                                    task.status === 'Completed' ? (team?.title_completed || 'مكتمل') : (team?.title_notes || 'ملاحظات')}
                     </span>
                     {(task.comment_count !== undefined && task.comment_count > 0) && (
                         <div className="flex items-center gap-1 text-muted-foreground">

@@ -19,6 +19,7 @@ interface ColumnProps {
     isAdmin: boolean;
     onUpdateTitle: (newTitle: string) => void;
     onUpdateColor: (colorId: string) => void;
+    team: any;
 }
 
 const AVAILABLE_COLORS = [
@@ -32,7 +33,7 @@ const AVAILABLE_COLORS = [
     { id: 'cyan', color: 'bg-cyan-500/10', textColor: 'text-cyan-600', borderColor: 'border-cyan-500/20', preview: 'bg-cyan-500' },
 ];
 
-export default function Column({ id, title, color, textColor, borderColor, tasks, onCreateTask, onTaskClick, isAdmin, onUpdateTitle, onUpdateColor }: ColumnProps) {
+export default function Column({ id, title, color, textColor, borderColor, tasks, onCreateTask, onTaskClick, isAdmin, onUpdateTitle, onUpdateColor, team }: ColumnProps) {
     const { fontSize } = useStore();
     const [isAdding, setIsAdding] = useState(false);
     const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -153,6 +154,7 @@ export default function Column({ id, title, color, textColor, borderColor, tasks
                                         onClick={() => onTaskClick(task)}
                                         isAdmin={isAdmin}
                                         isShadow={id === 'Plan' && task.status !== 'Plan'}
+                                        team={team}
                                     />
                                 ))}
                             </AnimatePresence>

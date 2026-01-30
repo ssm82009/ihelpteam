@@ -47,9 +47,7 @@ export default function Board() {
             const res = await fetch(`/api/teams/info?id=${team.id}`);
             if (res.ok) {
                 const refreshedTeam = await res.json();
-                if (refreshedTeam.admin_id !== team.admin_id) {
-                    setTeam(refreshedTeam);
-                }
+                setTeam(refreshedTeam);
             }
         } catch (e) {
             console.error('Failed to refresh team info', e);
@@ -97,19 +95,6 @@ export default function Board() {
 
     const handleCreateTask = async (status: Task['status'], title: string) => {
         if (!title.trim() || !team?.id) return;
-
-        // Create optimistic task
-        const tempId = 'temp-' + Date.now();
-        const optimisticTask: Task = {
-            id: tempId,
-            title,
-            status,
-            team_id: team.id,
-            created_at: new Date().toISOString()
-        };
-
-        // We don't add optimistic task to store immediately because we want the real ID from DB for further interactions
-        // But for better UX we could. For now let's just wait for API.
 
         try {
             const res = await fetch('/api/tasks', {
@@ -287,6 +272,7 @@ export default function Board() {
                                 isAdmin={isAdmin}
                                 onUpdateTitle={(newTitle) => handleUpdateColumnTitle(column.id, newTitle)}
                                 onUpdateColor={(colorId) => handleUpdateColumnColor(column.id, colorId)}
+                                team={team}
                             />
                         ))}
                     </DragDropContext>

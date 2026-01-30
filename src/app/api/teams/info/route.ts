@@ -11,7 +11,10 @@ export async function GET(request: Request) {
 
     try {
         const result = await db.execute({
-            sql: 'SELECT id, name, description, secret_code, admin_id FROM teams WHERE id = ?',
+            sql: `SELECT id, name, description, secret_code, admin_id, 
+                  title_plan, title_execution, title_completed, title_review, title_notes,
+                  color_plan, color_execution, color_review, color_completed, color_notes
+                  FROM teams WHERE id = ?`,
             args: [id],
         });
 
