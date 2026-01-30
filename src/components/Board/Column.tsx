@@ -4,8 +4,9 @@ import { useState } from 'react';
 import { Droppable } from '@hello-pangea/dnd';
 import { Task, useStore } from '@/lib/store';
 import TaskCard from './TaskCard';
-import { Plus, X, Edit2, Palette } from 'lucide-react';
+import { Plus, X, Edit2, Palette, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'react-hot-toast';
 
 interface ColumnProps {
     id: string;
@@ -40,6 +41,7 @@ export default function Column({ id, title, color, textColor, borderColor, tasks
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [editedTitle, setEditedTitle] = useState(title);
     const [showColorPicker, setShowColorPicker] = useState(false);
+    const [showLockTooltip, setShowLockTooltip] = useState(false);
 
     // Calculate dynamic font size for header (base it on the global fontSize + 4px for emphasis)
     const headerFontSize = fontSize + 4;
@@ -78,13 +80,52 @@ export default function Column({ id, title, color, textColor, borderColor, tasks
                             />
                         </form>
                     ) : (
-                        <div className="flex items-center gap-2 group/title cursor-pointer w-full" onClick={() => isAdmin && setIsEditingTitle(true)}>
+                        <div
+                            className="flex items-center gap-2 group/title cursor-pointer w-full"
+                            onClick={() => {
+                                if (!isAdmin) return;
+
+                                // Prevent renaming the Completed column
+                                if (id === 'Completed') {
+                                    setShowLockTooltip(true);
+                                    setTimeout(() => setShowLockTooltip(false), 4000);
+                                    return;
+                                }
+
+                                setIsEditingTitle(true);
+                            }}
+                        >
                             <h2
                                 className="font-black text-foreground tracking-wide"
                                 style={{ fontSize: `${headerFontSize}px` }}
                             >
                                 {title}
                             </h2>
+                            {id === 'Completed' && isAdmin && (
+                                <div className="relative">
+                                    <Lock size={12} className="text-amber-500" />
+                                    <AnimatePresence>
+                                        {showLockTooltip && (
+                                            <motion.div
+                                                initial={{ opacity: 0, x: -10, scale: 0.9 }}
+                                                animate={{ opacity: 1, x: 0, scale: 1 }}
+                                                exit={{ opacity: 0, x: -10, scale: 0.9 }}
+                                                className="absolute top-full right-0 mt-2 w-64 p-3 bg-amber-50 border border-amber-300 rounded-xl shadow-lg z-50"
+                                            >
+                                                <div className="flex items-start gap-2 text-right">
+                                                    <div className="flex-1">
+                                                        <p className="text-xs font-black text-amber-800 mb-1">🔒 عمود محمي</p>
+                                                        <p className="text-[10px] text-amber-700 leading-relaxed">
+                                                            لا يمكن تغيير اسم هذا العمود لأنه يُستخدم لحساب نسبة الإنجاز والإحصائيات
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="absolute -top-1.5 right-3 w-3 h-3 bg-amber-50 border-t border-r border-amber-300 rotate-[-45deg]" />
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
