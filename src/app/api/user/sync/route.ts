@@ -12,7 +12,7 @@ export async function POST(request: Request) {
         }
 
         const userResult = await db.execute({
-            sql: 'SELECT id, username, email, team_id, plan_type, subscription_end FROM users WHERE email = ? AND team_id = ?',
+            sql: 'SELECT id, username, email, team_id, plan_type, subscription_end, profile_image FROM users WHERE email = ? AND team_id = ?',
             args: [email, team_id]
         });
 

@@ -45,15 +45,16 @@ const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({ task, index, onCli
         }
     };
 
-    const cardContent = (
+    const cardContent = (isDragging: boolean) => (
         <motion.div
-            layoutId={isShadow ? `shadow-${task.id}` : task.id}
+            layoutId={isDragging ? undefined : (isShadow ? `shadow-${task.id}` : task.id)}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             style={{
                 filter: isShadow ? 'grayscale(100%)' : 'none',
-                opacity: isShadow ? 0.6 : 1
+                opacity: isShadow ? 0.6 : 1,
+                backgroundColor: !isShadow && task.background_color ? task.background_color : undefined
             }}
             className={`p-4 rounded-xl border border-border border-l-[6px] transition-all duration-200 relative overflow-hidden glass-card ${isShadow ? 'border-l-muted-foreground/30 border-dashed cursor-default' :
                 `cursor-grab active:cursor-grabbing ${task.status === 'Plan' ? 'border-l-status-plan' :
@@ -120,12 +121,28 @@ const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({ task, index, onCli
 
             <div className="mt-2 flex flex-row-reverse items-center justify-between pt-3 border-t border-border/50">
                 <div className="flex items-center gap-2">
-                    {task.user_name && (
+                    {task.assigned_name && (
                         <div
-                            className="w-6 h-6 rounded-md bg-muted border border-border shadow-sm flex items-center justify-center text-[10px] text-muted-foreground font-black"
-                            title={task.user_name}
+                            className="w-7 h-7 rounded-full bg-primary/10 border border-primary/20 shadow-sm flex items-center justify-center text-[10px] text-primary font-black ring-2 ring-white overflow-hidden"
+                            title={`مُسندة إلى: ${task.assigned_name}`}
                         >
-                            {task.user_name.charAt(0).toUpperCase()}
+                            {task.assigned_image ? (
+                                <img src={task.assigned_image} className="w-full h-full object-cover" alt="" />
+                            ) : (
+                                task.assigned_name.charAt(0).toUpperCase()
+                            )}
+                        </div>
+                    )}
+                    {!task.assigned_name && task.user_name && (
+                        <div
+                            className="w-6 h-6 rounded-md bg-muted border border-border shadow-sm flex items-center justify-center text-[10px] text-muted-foreground font-black overflow-hidden"
+                            title={`بواسطة: ${task.user_name}`}
+                        >
+                            {task.user_image ? (
+                                <img src={task.user_image} className="w-full h-full object-cover" alt="" />
+                            ) : (
+                                task.user_name.charAt(0).toUpperCase()
+                            )}
                         </div>
                     )}
                     <span className="hidden">#{task.id.slice(0, 6).toUpperCase()}</span>
@@ -157,29 +174,43 @@ const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({ task, index, onCli
     if (isShadow) {
         return (
             <div ref={ref} className="mb-3 grayscale opacity-60 pointer-events-none">
-                {cardContent}
+                {cardContent(false)}
             </div>
         );
     }
 
     return (
         <Draggable draggableId={task.id} index={index}>
-            {(provided, snapshot) => (
-                <div
-                    ref={(el) => {
-                        provided.innerRef(el);
-                        if (typeof ref === 'function') ref(el);
-                        else if (ref) ref.current = el;
-                    }}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    style={{ ...provided.draggableProps.style }}
-                    className={`mb-3 group outline-none ${snapshot.isDragging ? 'z-50 shadow-2xl rotate-1 scale-105 ring-2 ring-blue-100' : ''}`}
-                    onClick={() => !isEditing && onClick()}
-                >
-                    {cardContent}
-                </div>
-            )}
+            {(provided, snapshot) => {
+                const child = (
+                    <div
+                        ref={(el) => {
+                            provided.innerRef(el);
+                            if (typeof ref === 'function') ref(el);
+                            else if (ref) ref.current = el;
+                        }}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        style={provided.draggableProps.style}
+                        className="mb-3 group outline-none"
+                        onClick={() => !isEditing && onClick()}
+                    >
+                        <div className={`rounded-xl relative ${snapshot.isDragging ? 'z-[1000] shadow-2xl rotate-1 scale-105 ring-4 ring-primary/20 select-none' : 'transition-all duration-200'}`}>
+                            {snapshot.isDragging && (
+                                <div className="absolute inset-0 z-50 bg-transparent cursor-grabbing" />
+                            )}
+                            {cardContent(snapshot.isDragging)}
+                        </div>
+                    </div>
+                );
+
+                if (snapshot.isDragging) {
+                    return typeof document !== 'undefined'
+                        ? (require('react-dom') as typeof import('react-dom')).createPortal(child, document.body)
+                        : child;
+                }
+                return child;
+            }}
         </Draggable>
     );
 });

@@ -11,7 +11,7 @@ export async function GET(request: Request) {
 
     try {
         const result = await db.execute({
-            sql: 'SELECT id, username, email FROM users WHERE team_id = ?',
+            sql: 'SELECT id, username, email, profile_image FROM users WHERE team_id = ?',
             args: [team_id],
         });
         return NextResponse.json(result.rows);

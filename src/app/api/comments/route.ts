@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     try {
         const result = await db.execute({
             sql: `
-                SELECT c.*, u.username 
+                SELECT c.*, u.username, u.profile_image
                 FROM comments c 
                 LEFT JOIN users u ON c.user_id = u.id 
                 WHERE c.task_id = ? 

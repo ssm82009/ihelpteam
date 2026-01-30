@@ -219,45 +219,10 @@ export default function Board() {
     }
 
     return (
-        <div className="h-[calc(100vh-80px)] overflow-y-auto md:overflow-hidden bg-background relative transition-colors duration-300">
-            {/* Zoom Controls */}
-            <div className="fixed bottom-8 left-8 z-[100] flex items-center gap-2 bg-card/80 backdrop-blur-sm border border-border p-2 shadow-xl rounded-full transition-all hover:scale-105">
-                <button
-                    onClick={() => setFontSize(Math.max(10, fontSize - 1))}
-                    className="p-2 hover:bg-muted rounded-full text-muted-foreground transition-colors"
-                    title="تصغير الخط"
-                >
-                    <Minus size={18} />
-                </button>
-                <div className="w-[1px] h-4 bg-border mx-1" />
-                <button
-                    onClick={() => setFontSize(Math.min(24, fontSize + 1))}
-                    className="p-2 hover:bg-muted rounded-full text-muted-foreground transition-colors"
-                    title="تكبير الخط"
-                >
-                    <Plus size={18} />
-                </button>
-
-                <div className="w-[1px] h-4 bg-border mx-1" />
-
-                <button
-                    onClick={() => setIsBold(!isBold)}
-                    className={`p-2 rounded-full transition-all ${isBold ? 'bg-primary text-primary-foreground shadow-sm' : 'hover:bg-muted text-muted-foreground'}`}
-                    title={isBold ? "الخط عادي" : "الخط عريض"}
-                >
-                    <Bold size={18} />
-                </button>
-
-                <div className="w-[1px] h-4 bg-border mx-1" />
-
-                <div className="px-2 text-xs font-black text-muted-foreground font-mono">
-                    {fontSize}px
-                </div>
-            </div>
-
-            <div className="w-full h-full overflow-x-hidden md:overflow-x-auto custom-scrollbar px-4 md:px-8">
-                <div className="flex flex-col md:flex-row xl:justify-center min-w-full py-6 md:py-8 gap-8 md:gap-6 items-center md:items-start">
-                    <DragDropContext onDragEnd={onDragEnd}>
+        <DragDropContext onDragEnd={onDragEnd}>
+            <div className="h-[calc(100vh-80px)] overflow-y-auto md:overflow-hidden bg-background relative transition-colors duration-300">
+                <div className="w-full h-full overflow-x-hidden md:overflow-x-auto custom-scrollbar px-4 md:px-8 xl:px-12">
+                    <div className="flex flex-col md:flex-row min-w-full py-6 md:py-8 gap-8 md:gap-6 items-center md:items-start">
                         {COLUMNS.map((column) => (
                             <Column
                                 key={column.id}
@@ -275,17 +240,17 @@ export default function Board() {
                                 team={team}
                             />
                         ))}
-                    </DragDropContext>
+                    </div>
                 </div>
-            </div>
 
-            {isModalOpen && selectedTask && (
-                <TaskModal
-                    task={selectedTask}
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                />
-            )}
-        </div>
+                {isModalOpen && selectedTask && (
+                    <TaskModal
+                        task={selectedTask}
+                        isOpen={isModalOpen}
+                        onClose={() => setIsModalOpen(false)}
+                    />
+                )}
+            </div>
+        </DragDropContext>
     );
 }

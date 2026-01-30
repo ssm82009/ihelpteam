@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Task, useStore } from '@/lib/store';
-import { X, Image as ImageIcon, Send, Trash2, MessageSquare } from 'lucide-react';
+import { X, Image as ImageIcon, Send, Trash2, MessageSquare, UserPlus, Sparkles, User, Check, Edit2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import VoiceRecorder from './VoiceRecorder';
 
@@ -18,6 +18,7 @@ interface Comment {
     task_id: string;
     user_id: string;
     username: string;
+    profile_image?: string;
     content: string;
     type: 'text' | 'image' | 'voice';
     media_data?: string;
@@ -33,6 +34,9 @@ export default function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [currentBg, setCurrentBg] = useState(task.background_color || '#ffffff');
+    const [members, setMembers] = useState<{ id: string, username: string, email: string, profile_image?: string }[]>([]);
+    const [isAssigning, setIsAssigning] = useState(false);
+    const [assignedId, setAssignedId] = useState(task.assigned_id);
 
     const isAdmin = !!currentUser?.id && !!team?.admin_id && currentUser.id === team.admin_id;
 
@@ -44,8 +48,24 @@ export default function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
             setTitle(task.title);
             setStatus(task.status);
             setCurrentBg(task.background_color || '#ffffff');
+            setAssignedId(task.assigned_id);
+            if (isAdmin) {
+                fetchMembers();
+            }
         }
-    }, [isOpen, task.id, task.title, task.status, task.background_color]);
+    }, [isOpen, task.id, task.title, task.status, task.background_color, task.assigned_id]);
+
+    const fetchMembers = async () => {
+        try {
+            const res = await fetch(`/api/teams/members?team_id=${team?.id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setMembers(data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch members');
+        }
+    };
 
     const fetchComments = async () => {
         setIsLoading(true);
@@ -113,6 +133,37 @@ export default function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
         }
     };
 
+    const handleAssign = async (userId: string, username: string) => {
+        const isUnassign = assignedId === userId;
+        const newId = isUnassign ? null : userId;
+        const newName = isUnassign ? null : username;
+        const newImage = isUnassign ? null : members.find(m => m.id === userId)?.profile_image;
+
+        setAssignedId(newId || undefined);
+        updateTask(task.id, {
+            assigned_id: newId || undefined,
+            assigned_name: newName || undefined,
+            assigned_image: newImage || undefined
+        });
+        setIsAssigning(false);
+
+        try {
+            const res = await fetch(`/api/tasks/${task.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    assigned_id: newId,
+                    assigned_name: newName,
+                    assigned_image: newImage
+                })
+            });
+            if (!res.ok) throw new Error();
+            toast.success(isUnassign ? 'تم إلغاء الإسناد' : `تم إسناد المهمة لـ ${username}`);
+        } catch (e) {
+            toast.error('فشل تحديث الإسناد');
+        }
+    };
+
     const handleSendComment = async (type: 'text' | 'image' | 'voice', content: string = '', mediaData: string | null = null) => {
         if (!content && !mediaData) return;
         if (!currentUser) return;
@@ -122,6 +173,7 @@ export default function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
             task_id: task.id,
             user_id: currentUser.id,
             username: currentUser.username,
+            profile_image: currentUser.profile_image,
             content,
             type,
             media_data: mediaData || undefined,
@@ -248,18 +300,102 @@ export default function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
                                 </div>
                             </div>
 
+                            {/* Assignment Section */}
+                            <div className="relative">
+                                <label className="text-[10px] font-black text-muted-foreground uppercase mb-3 block tracking-tighter flex items-center gap-2">
+                                    إسناد المهمة
+                                    <Sparkles size={10} className="text-amber-500" />
+                                </label>
+
+                                <div className="space-y-3">
+                                    {assignedId ? (
+                                        <div className="flex items-center justify-between p-3 bg-primary/5 rounded-2xl border border-primary/10">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs ring-2 ring-white overflow-hidden">
+                                                    {(members.find(m => m.id === assignedId)?.profile_image || task.assigned_image) ? (
+                                                        <img src={members.find(m => m.id === assignedId)?.profile_image || task.assigned_image} className="w-full h-full object-cover" alt="" />
+                                                    ) : (
+                                                        (members.find(m => m.id === assignedId)?.username || task.assigned_name || '؟').charAt(0).toUpperCase()
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-black text-foreground">
+                                                        {members.find(m => m.id === assignedId)?.username || task.assigned_name || 'عضو غير مرئي'}
+                                                    </p>
+                                                    <p className="text-[9px] text-muted-foreground font-bold">مُكلف بهذه المهمة</p>
+                                                </div>
+                                            </div>
+                                            {isAdmin && (
+                                                <button
+                                                    onClick={() => setIsAssigning(!isAssigning)}
+                                                    className="p-1.5 hover:bg-primary/10 rounded-lg text-primary transition-colors"
+                                                >
+                                                    <Edit2 size={14} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => isAdmin && setIsAssigning(!isAssigning)}
+                                            className="w-full py-3 px-4 flex items-center justify-center gap-2 bg-muted/30 border border-dashed border-border rounded-2xl text-muted-foreground hover:text-primary hover:border-primary/50 transition-all text-xs font-bold"
+                                        >
+                                            <UserPlus size={16} />
+                                            <span>لم يتم إسنادها لأحد</span>
+                                        </button>
+                                    )}
+
+                                    <AnimatePresence>
+                                        {isAssigning && isAdmin && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                className="absolute top-full left-0 right-0 mt-2 p-3 bg-card border border-border rounded-2xl shadow-2xl z-[100] max-h-[200px] overflow-y-auto custom-scrollbar"
+                                            >
+                                                <div className="space-y-1">
+                                                    <p className="text-[9px] font-black text-muted-foreground uppercase mb-2 px-1">اختر عضواً للإسناد</p>
+                                                    {members.map((member) => (
+                                                        <button
+                                                            key={member.id}
+                                                            onClick={() => handleAssign(member.id, member.username)}
+                                                            className={`w-full flex items-center gap-3 p-2 rounded-xl transition-all text-right ${assignedId === member.id ? 'bg-primary/10 text-primary' : 'hover:bg-muted text-foreground'}`}
+                                                        >
+                                                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold overflow-hidden ${assignedId === member.id ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'}`}>
+                                                                {member.profile_image ? (
+                                                                    <img src={member.profile_image} className="w-full h-full object-cover" alt="" />
+                                                                ) : (
+                                                                    member.username.charAt(0)
+                                                                )}
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <p className="text-xs font-bold">{member.username}</p>
+                                                                <p className="text-[9px] opacity-70 truncate">{member.email}</p>
+                                                            </div>
+                                                            {assignedId === member.id && <Check size={14} />}
+                                                        </button>
+                                                    ))}
+                                                    {members.length === 0 && (
+                                                        <p className="text-[10px] text-center py-4 text-muted-foreground">لا يوجد أعضاء في الفريق حالياً</p>
+                                                    )}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            </div>
+
                             {/* Colors */}
                             <div className="hidden md:block">
                                 <label className="text-[10px] font-black text-muted-foreground uppercase mb-3 block tracking-tighter">لون التمييز</label>
                                 <div className="flex flex-wrap gap-2">
                                     {[
                                         'transparent',
-                                        'rgba(59, 130, 246, 0.1)',
-                                        'rgba(236, 72, 153, 0.1)',
-                                        'rgba(34, 197, 94, 0.1)',
-                                        'rgba(234, 179, 8, 0.1)',
-                                        'rgba(168, 85, 247, 0.1)',
-                                        'rgba(239, 68, 68, 0.1)',
+                                        'rgba(59, 130, 246, 0.07)',
+                                        'rgba(236, 72, 153, 0.07)',
+                                        'rgba(34, 197, 94, 0.07)',
+                                        'rgba(234, 179, 8, 0.07)',
+                                        'rgba(168, 85, 247, 0.07)',
+                                        'rgba(239, 68, 68, 0.07)',
                                     ].map((color) => (
                                         <button
                                             key={color}
@@ -287,12 +423,12 @@ export default function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
                                         <div className="flex gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
                                             {[
                                                 'transparent',
-                                                'rgba(59, 130, 246, 0.1)',
-                                                'rgba(236, 72, 153, 0.1)',
-                                                'rgba(34, 197, 94, 0.1)',
-                                                'rgba(234, 179, 8, 0.1)',
-                                                'rgba(168, 85, 247, 0.1)',
-                                                'rgba(239, 68, 68, 0.1)',
+                                                'rgba(59, 130, 246, 0.07)',
+                                                'rgba(236, 72, 153, 0.07)',
+                                                'rgba(34, 197, 94, 0.07)',
+                                                'rgba(234, 179, 8, 0.07)',
+                                                'rgba(168, 85, 247, 0.07)',
+                                                'rgba(239, 68, 68, 0.07)',
                                             ].map((color) => (
                                                 <button
                                                     key={color}
@@ -332,8 +468,12 @@ export default function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
                         <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 custom-scrollbar bg-slate-50/30">
                             {comments.map((comment) => (
                                 <div key={comment.id} className={`flex gap-3 ${comment.user_id === currentUser?.id ? 'flex-row-reverse' : 'flex-row'}`}>
-                                    <div className={`w-8 h-8 rounded-xl ${getAvatarColor(comment.username || '؟')} flex items-center justify-center text-white text-[10px] font-black shrink-0 shadow-lg ring-2 ring-white`}>
-                                        {(comment.username || '؟').charAt(0).toUpperCase()}
+                                    <div className={`w-8 h-8 rounded-xl ${!comment.profile_image ? getAvatarColor(comment.username || '؟') : 'bg-transparent'} flex items-center justify-center text-white text-[10px] font-black shrink-0 shadow-lg ring-2 ring-white overflow-hidden`}>
+                                        {comment.profile_image ? (
+                                            <img src={comment.profile_image} className="w-full h-full object-cover" alt="" />
+                                        ) : (
+                                            (comment.username || '؟').charAt(0).toUpperCase()
+                                        )}
                                     </div>
                                     <div className={`flex flex-col max-w-[85%] ${comment.user_id === currentUser?.id ? 'items-end' : 'items-start'}`}>
                                         <span className="text-[10px] font-black text-muted-foreground mb-1.5 px-1">{comment.username || 'عضو سابق'}</span>

@@ -23,7 +23,9 @@ export async function generateMetadata(): Promise<Metadata> {
         title: settings.seo_title || settings.site_name || 'مُساعد الفريق - Team Assistant',
         description: settings.seo_description || 'Team Kanban Board with Media Support',
         icons: {
-            icon: settings.site_favicon_url || '/favicon.ico',
+            icon: settings.site_favicon_url ? `/api/favicon?v=${Date.now()}` : '/favicon.ico',
+            shortcut: '/favicon.ico',
+            apple: '/favicon.ico',
         }
     };
 }

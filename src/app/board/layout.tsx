@@ -1,14 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
-import { LogOut, User as UserIcon, Shield, Users, Copy, Check, Palette, Moon, Sun, Monitor, Leaf, Plus, Layout, ChevronDown, Headset } from 'lucide-react';
+import Footer from '@/components/Footer';
+import { Shield, ChevronDown, Check, Layout, Plus, Star, CreditCard, Users, Palette, Sun, Moon, Copy, LogOut, Camera, User as UserIcon, Headset, Monitor, Leaf } from 'lucide-react';
 import MemberModal from '@/components/Board/MemberModal';
 import SubscriptionModal from '@/components/Board/SubscriptionModal';
 import CreateTeamModal from '@/components/Board/CreateTeamModal';
 import { toast } from 'react-hot-toast';
-import { CreditCard, Star } from 'lucide-react';
 
 export default function BoardLayout({
     children,
@@ -161,6 +161,72 @@ export default function BoardLayout({
 
     const [isCreateTeamOpen, setIsCreateTeamOpen] = useState(false);
 
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const teamMenuRef = useRef<HTMLDivElement>(null);
+    const themeMenuRef = useRef<HTMLDivElement>(null);
+    const profileMenuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            const target = event.target as Node;
+            if (teamMenuRef.current && !teamMenuRef.current.contains(target)) {
+                setIsTeamMenuOpen(false);
+            }
+            if (themeMenuRef.current && !themeMenuRef.current.contains(target)) {
+                setIsThemeMenuOpen(false);
+            }
+            if (profileMenuRef.current && !profileMenuRef.current.contains(target)) {
+                setIsProfileMenuOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !currentUser) return;
+
+        if (file.size > 2 * 1024 * 1024) {
+            toast.error('حجم الصورة يجب أن يكون أقل من 2 ميجابايت');
+            return;
+        }
+
+        setIsUploading(true);
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+            const base64 = reader.result as string;
+            try {
+                const res = await fetch('/api/user/update-profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: currentUser.id, profile_image: base64 })
+                });
+
+                if (!res.ok) throw new Error();
+                setCurrentUser({ ...currentUser, profile_image: base64 });
+
+                // Update tasks in store locally for immediate feedback
+                useStore.getState().setTasks(
+                    useStore.getState().tasks.map(t => ({
+                        ...t,
+                        user_image: t.user_id === currentUser.id ? base64 : t.user_image,
+                        assigned_image: t.assigned_id === currentUser.id ? base64 : t.assigned_image
+                    }))
+                );
+
+                toast.success('تم تحديث الصورة الشخصية');
+            } catch (error) {
+                toast.error('فشل تحديث الصورة');
+            } finally {
+                setIsUploading(false);
+            }
+        };
+        reader.readAsDataURL(file);
+    };
+
     if (!hydrated || !team || !currentUser) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -180,7 +246,7 @@ export default function BoardLayout({
                 <div className="w-full h-full px-4 md:px-8 flex items-center justify-between">
                     {/* Left Side: Team & Projects */}
                     <div className="flex items-center gap-3">
-                        <div className="relative">
+                        <div className="relative" ref={teamMenuRef}>
                             <button
                                 onClick={() => setIsTeamMenuOpen(!isTeamMenuOpen)}
                                 className="flex items-center gap-2 md:gap-3 hover:bg-secondary/20 p-1.5 md:px-4 md:py-2.5 rounded-[20px] md:rounded-2xl transition-all active:scale-95 group"
@@ -201,55 +267,52 @@ export default function BoardLayout({
                             </button>
 
                             {isTeamMenuOpen && (
-                                <>
-                                    <div className="fixed inset-0 z-[115]" onClick={() => setIsTeamMenuOpen(false)} />
-                                    <div className="absolute top-[calc(100%+12px)] right-0 w-72 bg-card border border-border rounded-[28px] shadow-2xl z-[120] overflow-hidden py-3 animate-in fade-in slide-in-from-top-3 duration-300">
-                                        <div className="px-6 py-2 border-b border-border/50 mb-3 flex items-center justify-between">
-                                            <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest font-tajawal">تبديل المشروع</span>
-                                            <Layout size={12} className="text-muted-foreground/40" />
-                                        </div>
-
-                                        <div className="max-h-80 overflow-y-auto custom-scrollbar px-3 space-y-1.5">
-                                            {userTeams.map((t) => (
-                                                <button
-                                                    key={t.id}
-                                                    onClick={() => handleSwitchTeam(t.id)}
-                                                    className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all ${t.id === team.id
-                                                        ? 'bg-primary/10 text-primary border border-primary/20 shadow-sm'
-                                                        : 'hover:bg-muted text-foreground border border-transparent'
-                                                        }`}
-                                                >
-                                                    <div className={`h-9 w-9 rounded-xl flex items-center justify-center text-sm font-black shadow-sm ${t.id === team.id ? 'bg-primary text-white' : 'bg-muted-foreground/20 text-muted-foreground'
-                                                        }`}>
-                                                        {t.name.charAt(0)}
-                                                    </div>
-                                                    <div className="flex-1 text-right overflow-hidden">
-                                                        <div className="text-sm font-black truncate">{t.name}</div>
-                                                        <div className="text-[10px] opacity-60 font-mono tracking-widest">#{t.secret_code}</div>
-                                                    </div>
-                                                    {t.id === team.id && <Check size={16} className="text-primary" />}
-                                                </button>
-                                            ))}
-                                        </div>
-
-                                        {currentUser.plan_type === 'pro' && (
-                                            <div className="mt-3 pt-3 border-t border-border/50 px-3">
-                                                <button
-                                                    onClick={() => {
-                                                        setIsCreateTeamOpen(true);
-                                                        setIsTeamMenuOpen(false);
-                                                    }}
-                                                    className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-emerald-600 bg-emerald-500/5 hover:bg-emerald-500/10 transition-all font-black text-xs border border-emerald-500/10"
-                                                >
-                                                    <div className="h-9 w-9 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                                                        <Plus size={18} />
-                                                    </div>
-                                                    <span>إنشاء فريق جديد</span>
-                                                </button>
-                                            </div>
-                                        )}
+                                <div className="absolute top-[calc(100%+12px)] right-0 w-72 bg-card border border-border rounded-[28px] shadow-2xl z-[120] overflow-hidden py-3 animate-in fade-in slide-in-from-top-3 duration-300">
+                                    <div className="px-6 py-2 border-b border-border/50 mb-3 flex items-center justify-between">
+                                        <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest font-tajawal">تبديل المشروع</span>
+                                        <Layout size={12} className="text-muted-foreground/40" />
                                     </div>
-                                </>
+
+                                    <div className="max-h-80 overflow-y-auto custom-scrollbar px-3 space-y-1.5">
+                                        {userTeams.map((t) => (
+                                            <button
+                                                key={t.id}
+                                                onClick={() => handleSwitchTeam(t.id)}
+                                                className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all ${t.id === team.id
+                                                    ? 'bg-primary/10 text-primary border border-primary/20 shadow-sm'
+                                                    : 'hover:bg-muted text-foreground border border-transparent'
+                                                    }`}
+                                            >
+                                                <div className={`h-9 w-9 rounded-xl flex items-center justify-center text-sm font-black shadow-sm ${t.id === team.id ? 'bg-primary text-white' : 'bg-muted-foreground/20 text-muted-foreground'
+                                                    }`}>
+                                                    {t.name.charAt(0)}
+                                                </div>
+                                                <div className="flex-1 text-right overflow-hidden">
+                                                    <div className="text-sm font-black truncate">{t.name}</div>
+                                                    <div className="text-[10px] opacity-60 font-mono tracking-widest">#{t.secret_code}</div>
+                                                </div>
+                                                {t.id === team.id && <Check size={16} className="text-primary" />}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {currentUser.plan_type === 'pro' && (
+                                        <div className="mt-3 pt-3 border-t border-border/50 px-3">
+                                            <button
+                                                onClick={() => {
+                                                    setIsCreateTeamOpen(true);
+                                                    setIsTeamMenuOpen(false);
+                                                }}
+                                                className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-emerald-600 bg-emerald-500/5 hover:bg-emerald-500/10 transition-all font-black text-xs border border-emerald-500/10"
+                                            >
+                                                <div className="h-9 w-9 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                                                    <Plus size={18} />
+                                                </div>
+                                                <span>إنشاء فريق جديد</span>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             )}
                         </div>
 
@@ -299,7 +362,7 @@ export default function BoardLayout({
                                 <Users size={18} className="group-hover:scale-110 transition-transform" />
                             </button>
 
-                            <div className="relative">
+                            <div className="relative" ref={themeMenuRef}>
                                 <button
                                     onClick={() => setIsThemeMenuOpen(!isThemeMenuOpen)}
                                     className="h-9 w-9 md:h-10 md:w-10 flex items-center justify-center bg-card hover:bg-muted text-primary rounded-xl md:rounded-2xl border border-border/50 shadow-sm transition-all active:scale-95 group"
@@ -309,101 +372,166 @@ export default function BoardLayout({
                                 </button>
 
                                 {isThemeMenuOpen && (
-                                    <>
-                                        <div className="fixed inset-0 z-[115]" onClick={() => setIsThemeMenuOpen(false)} />
-                                        <div className="absolute left-0 mt-3 w-56 bg-card border border-border rounded-[28px] shadow-2xl z-[120] overflow-hidden py-1 animate-in fade-in slide-in-from-right-4 duration-300 border-t-4 border-t-primary">
-                                            {/* Themes Section */}
-                                            <div className="px-5 py-3 border-b border-border/50 mb-1">
-                                                <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest font-tajawal">مظهر النظام</span>
-                                            </div>
-                                            <div className="max-h-60 overflow-y-auto custom-scrollbar px-2 space-y-0.5">
-                                                {themes.map((t) => (
+                                    <div className="absolute left-0 mt-3 w-56 bg-card border border-border rounded-[28px] shadow-2xl z-[120] overflow-hidden py-1 animate-in fade-in slide-in-from-right-4 duration-300 border-t-4 border-t-primary">
+                                        {/* Themes Section */}
+                                        <div className="px-5 py-3 border-b border-border/50 mb-1">
+                                            <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest font-tajawal">مظهر النظام</span>
+                                        </div>
+                                        <div className="max-h-60 overflow-y-auto custom-scrollbar px-2 space-y-0.5">
+                                            {themes.map((t) => (
+                                                <button
+                                                    key={t.id}
+                                                    onClick={() => setTheme(t.id as any)}
+                                                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold hover:bg-muted transition-colors ${theme === t.id ? 'bg-primary/10 text-primary' : 'text-foreground'}`}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`h-4.5 w-4.5 rounded-full border border-border shadow-inner ${t.class}`} />
+                                                        <span>{t.name}</span>
+                                                    </div>
+                                                    {theme === t.id && <Check size={14} className="text-primary" />}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <div className="h-px bg-border/50 my-1.5" />
+
+                                        {/* Radius & Font Section Simplified */}
+                                        <div className="px-5 py-2">
+                                            <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest font-tajawal">التخصيص المتقدم</span>
+                                        </div>
+                                        <div className="px-2 pb-3 space-y-1">
+                                            <div className="flex gap-1">
+                                                {radii.map((r) => (
                                                     <button
-                                                        key={t.id}
-                                                        onClick={() => setTheme(t.id as any)}
-                                                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold hover:bg-muted transition-colors ${theme === t.id ? 'bg-primary/10 text-primary' : 'text-foreground'}`}
+                                                        key={r.id}
+                                                        onClick={() => setRadius(r.id as any)}
+                                                        className={`flex-1 flex flex-col items-center justify-center p-2 rounded-xl border transition-all ${radius === r.id ? 'bg-primary/10 border-primary/30 text-primary' : 'border-transparent hover:bg-muted'}`}
                                                     >
-                                                        <div className="flex items-center gap-3">
-                                                            <div className={`h-4.5 w-4.5 rounded-full border border-border shadow-inner ${t.class}`} />
-                                                            <span>{t.name}</span>
-                                                        </div>
-                                                        {theme === t.id && <Check size={14} className="text-primary" />}
-                                                    </button>
-                                                ))}
-                                            </div>
-
-                                            <div className="h-px bg-border/50 my-1.5" />
-
-                                            {/* Radius & Font Section Simplified */}
-                                            <div className="px-5 py-2">
-                                                <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest font-tajawal">التخصيص المتقدم</span>
-                                            </div>
-                                            <div className="px-2 pb-3 space-y-1">
-                                                <div className="flex gap-1">
-                                                    {radii.map((r) => (
-                                                        <button
-                                                            key={r.id}
-                                                            onClick={() => setRadius(r.id as any)}
-                                                            className={`flex-1 flex flex-col items-center justify-center p-2 rounded-xl border transition-all ${radius === r.id ? 'bg-primary/10 border-primary/30 text-primary' : 'border-transparent hover:bg-muted'}`}
-                                                        >
-                                                            <div className="mb-1">{r.icon}</div>
-                                                            <span className="text-[9px] font-black">{r.name}</span>
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            <div className="h-px bg-border/50 my-1" />
-
-                                            <div className="px-5 py-2">
-                                                <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest font-tajawal">نوع الخط</span>
-                                            </div>
-                                            <div className="px-2 pb-3 flex flex-wrap gap-1">
-                                                {fonts.map((f) => (
-                                                    <button
-                                                        key={f.id}
-                                                        onClick={() => setFontFamily(f.id as any)}
-                                                        className={`flex-1 min-w-[45%] flex items-center justify-center py-2 rounded-xl border text-xs font-bold transition-all ${fontFamily === f.id ? 'bg-primary/10 border-primary/30 text-primary' : 'border-transparent hover:bg-muted opacity-60 hover:opacity-100'}`}
-                                                    >
-                                                        <span className={f.id === 'default' ? '' : `font-${f.id}`}>{f.name}</span>
+                                                        <div className="mb-1">{r.icon}</div>
+                                                        <span className="text-[9px] font-black">{r.name}</span>
                                                     </button>
                                                 ))}
                                             </div>
                                         </div>
-                                    </>
+
+                                        <div className="h-px bg-border/50 my-1" />
+
+                                        <div className="px-5 py-2">
+                                            <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest font-tajawal">نوع الخط</span>
+                                        </div>
+                                        <div className="px-2 pb-3 flex flex-wrap gap-1">
+                                            {fonts.map((f) => (
+                                                <button
+                                                    key={f.id}
+                                                    onClick={() => setFontFamily(f.id as any)}
+                                                    className={`flex-1 min-w-[45%] flex items-center justify-center py-2 rounded-xl border text-xs font-bold transition-all ${fontFamily === f.id ? 'bg-primary/10 border-primary/30 text-primary' : 'border-transparent hover:bg-muted opacity-60 hover:opacity-100'}`}
+                                                >
+                                                    <span className={f.id === 'default' ? '' : `font-${f.id}`}>{f.name}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
                                 )}
                             </div>
+                        </div>
 
-                            <div className="h-8 w-px bg-border/40 mx-0.5 hidden md:block" />
+                        <div className="h-8 w-px bg-border/40 mx-0.5 hidden md:block" />
 
-                            <div className="hidden sm:flex items-center gap-3 bg-card/80 pl-1.5 pr-4 py-1.5 rounded-xl border border-border/50 shadow-sm group hover:border-primary/30 transition-all">
+                        {/* User Profile Menu */}
+                        <div className="relative" ref={profileMenuRef}>
+                            <button
+                                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                                className="hidden sm:flex items-center gap-3 bg-card/80 pl-1.5 pr-4 py-1.5 rounded-xl border border-border/50 shadow-sm group hover:border-primary/30 transition-all active:scale-95"
+                            >
                                 <div className="flex flex-col text-right">
                                     <span className="text-[11px] font-black text-foreground leading-none">{currentUser.username}</span>
                                     <span className="text-[8px] font-black text-primary uppercase opacity-60 tracking-tighter">الحساب الشخصي</span>
                                 </div>
-                                <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center border border-primary/20 text-primary shadow-sm group-hover:bg-primary group-hover:text-white transition-all">
-                                    <UserIcon size={14} />
+                                <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center border border-primary/20 text-primary shadow-sm group-hover:bg-primary group-hover:text-white transition-all overflow-hidden">
+                                    {currentUser.profile_image ? (
+                                        <img src={currentUser.profile_image} className="w-full h-full object-cover" alt="" />
+                                    ) : (
+                                        <UserIcon size={14} />
+                                    )}
                                 </div>
-                            </div>
-
-                            <button
-                                onClick={() => {
-                                    logout();
-                                    router.push('/');
-                                }}
-                                className="h-9 w-9 md:h-10 md:w-10 flex items-center justify-center bg-destructive/5 hover:bg-destructive text-destructive hover:text-white rounded-xl md:rounded-2xl border border-destructive/10 shadow-sm transition-all active:scale-95 group"
-                                title="تسجيل الخروج"
-                            >
-                                <LogOut size={18} className="group-hover:rotate-12 transition-transform" />
+                                <ChevronDown size={12} className={`text-muted-foreground transition-transform duration-300 ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
                             </button>
+
+                            {/* Mobile User Button */}
+                            <button
+                                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                                className="sm:hidden h-9 w-9 flex items-center justify-center bg-card hover:bg-muted text-primary rounded-xl border border-border/50 shadow-sm transition-all overflow-hidden"
+                            >
+                                {currentUser.profile_image ? (
+                                    <img src={currentUser.profile_image} className="w-full h-full object-cover" alt="" />
+                                ) : (
+                                    <UserIcon size={16} />
+                                )}
+                            </button>
+
+                            {isProfileMenuOpen && (
+                                <div className="absolute left-0 mt-3 w-72 bg-card border border-border rounded-[28px] shadow-2xl z-[120] overflow-hidden p-4 animate-in fade-in slide-in-from-right-4 duration-300 border-t-4 border-t-primary">
+                                    <div className="flex items-center gap-4 mb-4 pb-4 border-b border-border/50">
+                                        <div className="relative group shrink-0">
+                                            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center text-white text-xl font-black shadow-lg overflow-hidden ring-2 ring-white">
+                                                {currentUser.profile_image ? (
+                                                    <img src={currentUser.profile_image} className="w-full h-full object-cover" alt="" />
+                                                ) : (
+                                                    currentUser.username.charAt(0).toUpperCase()
+                                                )}
+                                            </div>
+                                            <button
+                                                onClick={() => fileInputRef.current?.click()}
+                                                disabled={isUploading}
+                                                className="absolute -bottom-1 -right-1 p-1 bg-white rounded-lg shadow-md border border-border hover:text-primary transition-colors disabled:opacity-50"
+                                            >
+                                                <Camera size={12} />
+                                            </button>
+                                            <input
+                                                type="file"
+                                                ref={fileInputRef}
+                                                onChange={handleImageUpload}
+                                                accept="image/*"
+                                                className="hidden"
+                                            />
+                                        </div>
+                                        <div className="flex-1 overflow-hidden text-right">
+                                            <h3 className="text-sm font-black text-foreground truncate">{currentUser.username}</h3>
+                                            <p className="text-[10px] text-muted-foreground font-bold truncate">{currentUser.email}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <button
+                                            onClick={() => {
+                                                if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
+                                                    logout();
+                                                    window.location.href = '/';
+                                                }
+                                            }}
+                                            className="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-destructive/5 text-destructive text-sm font-bold transition-all group"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <LogOut size={16} className="group-hover:rotate-12 transition-transform" />
+                                                <span>تسجيل الخروج</span>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             </header>
 
-            <main className="flex-1 overflow-hidden pt-2">
-                {children}
+
+            <main className="flex-1 overflow-hidden pt-2 flex flex-col pb-12">
+                <div className="flex-1 overflow-y-auto">
+                    {children}
+                </div>
             </main>
+
+            <Footer />
 
             {/* Modals */}
             <MemberModal
@@ -418,6 +546,6 @@ export default function BoardLayout({
                 isOpen={isCreateTeamOpen}
                 onClose={() => setIsCreateTeamOpen(false)}
             />
-        </div>
+        </div >
     );
 }

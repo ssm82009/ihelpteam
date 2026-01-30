@@ -10,6 +10,7 @@ interface Member {
     id: string;
     username: string;
     email: string;
+    profile_image?: string;
 }
 
 interface TeamStats {
@@ -35,6 +36,7 @@ export default function MemberModal({ isOpen, onClose }: MemberModalProps) {
         completedTasks: 0,
         completionRate: 0
     });
+    const [allTasks, setAllTasks] = useState<any[]>([]);
 
     useEffect(() => {
         if (isOpen && team?.id) {
@@ -63,6 +65,7 @@ export default function MemberModal({ isOpen, onClose }: MemberModalProps) {
             const res = await fetch(`/api/tasks?team_id=${team?.id}`);
             if (!res.ok) throw new Error('Failed to fetch tasks');
             const tasks = await res.json();
+            setAllTasks(tasks);
 
             const totalTasks = tasks.length;
             const completedTasks = tasks.filter((t: any) => t.status === 'Completed').length;
@@ -77,6 +80,14 @@ export default function MemberModal({ isOpen, onClose }: MemberModalProps) {
         } catch (error) {
             console.error('Failed to fetch stats');
         }
+    };
+
+    const getMemberStats = (userId: string) => {
+        const memberTasks = allTasks.filter(t => t.assigned_id === userId);
+        const total = memberTasks.length;
+        const completed = memberTasks.filter(t => t.status === 'Completed').length;
+        const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+        return { total, completed, rate };
     };
 
     const handleDeleteMember = async (userId: string, username: string) => {
@@ -247,43 +258,65 @@ export default function MemberModal({ isOpen, onClose }: MemberModalProps) {
                                             <p className="text-muted-foreground text-sm">لا يوجد أعضاء آخرين</p>
                                         </div>
                                     ) : (
-                                        members.map((member, index) => (
-                                            <motion.div
-                                                key={member.id}
-                                                initial={{ opacity: 0, x: -20 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                transition={{ delay: index * 0.05 }}
-                                                className="group flex items-center justify-between p-3 bg-muted/30 hover:bg-muted/50 border border-transparent hover:border-border rounded-2xl transition-all"
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="h-10 w-10 bg-gradient-to-br from-primary/20 to-violet-500/20 rounded-xl flex items-center justify-center text-primary font-bold">
-                                                        {member.username.charAt(0)}
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-bold text-foreground flex items-center gap-2">
-                                                            {member.username}
-                                                            {member.id === team?.admin_id && (
-                                                                <span className="text-[9px] bg-gradient-to-r from-amber-500 to-orange-500 text-white px-1.5 py-0.5 rounded-full font-black uppercase">رئيس الفريق</span>
+                                        members.map((member, index) => {
+                                            const mStats = getMemberStats(member.id);
+                                            return (
+                                                <motion.div
+                                                    key={member.id}
+                                                    initial={{ opacity: 0, x: -20 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    transition={{ delay: index * 0.05 }}
+                                                    className="group flex items-center justify-between p-3 bg-muted/30 hover:bg-muted/50 border border-transparent hover:border-border rounded-2xl transition-all"
+                                                >
+                                                    <div className="flex items-center gap-3 overflow-hidden">
+                                                        <div className="h-10 w-10 bg-gradient-to-br from-primary/20 to-violet-500/20 rounded-xl flex items-center justify-center text-primary font-bold shrink-0 overflow-hidden">
+                                                            {member.profile_image ? (
+                                                                <img src={member.profile_image} className="w-full h-full object-cover" alt="" />
+                                                            ) : (
+                                                                member.username.charAt(0)
                                                             )}
-                                                            {member.id === currentUser?.id && (
-                                                                <span className="text-[9px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full font-black uppercase">أنت</span>
-                                                            )}
-                                                        </p>
-                                                        <p className="text-[11px] text-muted-foreground font-medium">{member.email}</p>
+                                                        </div>
+                                                        <div className="overflow-hidden">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <p className="text-sm font-bold text-foreground truncate max-w-[120px]">
+                                                                    {member.username}
+                                                                </p>
+                                                                {member.id === team?.admin_id && (
+                                                                    <span className="text-[8px] bg-gradient-to-r from-amber-500 to-orange-500 text-white px-1.5 py-0.5 rounded-full font-black uppercase whitespace-nowrap">رئيس الفريق</span>
+                                                                )}
+                                                                {member.id === currentUser?.id && (
+                                                                    <span className="text-[8px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full font-black uppercase whitespace-nowrap">أنت</span>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex items-center gap-2 mt-0.5">
+                                                                <div className="flex items-center gap-1 bg-white/50 px-1.5 py-0.5 rounded-md border border-border/50">
+                                                                    <ClipboardList size={10} className="text-violet-500" />
+                                                                    <span className="text-[9px] font-black text-violet-700">{mStats.total} مهام</span>
+                                                                </div>
+                                                                {mStats.total > 0 && (
+                                                                    <div className="flex items-center gap-1 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-100">
+                                                                        <TrendingUp size={10} className="text-emerald-500" />
+                                                                        <span className="text-[9px] font-black text-emerald-700">{mStats.rate}% إنجاز</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                </div>
 
-                                                {member.id !== currentUser?.id && currentUser?.id === team?.admin_id && (
-                                                    <button
-                                                        onClick={() => handleDeleteMember(member.id, member.username)}
-                                                        className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-                                                        title="حذف من الفريق"
-                                                    >
-                                                        <UserMinus size={18} />
-                                                    </button>
-                                                )}
-                                            </motion.div>
-                                        ))
+                                                    <div className="flex items-center gap-1">
+                                                        {member.id !== currentUser?.id && currentUser?.id === team?.admin_id && (
+                                                            <button
+                                                                onClick={() => handleDeleteMember(member.id, member.username)}
+                                                                className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                                                                title="حذف من الفريق"
+                                                            >
+                                                                <UserMinus size={18} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </motion.div>
+                                            );
+                                        })
                                     )}
                                 </div>
                             </div>

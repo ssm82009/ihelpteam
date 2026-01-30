@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/lib/store';
 import { toast } from 'react-hot-toast';
+import Footer from '@/components/Footer';
 import { Users, LogIn, ArrowRight, Sparkles, Copy, Mail, Lock, User as UserIcon, CheckCircle2, Clock, Target, Zap, LayoutGrid, MessageSquare } from 'lucide-react';
 
 // ===== ANIMATED KANBAN BOARD ILLUSTRATION =====
@@ -215,7 +216,7 @@ function HomeContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { team, currentUser, setTeam, setCurrentUser } = useStore();
-
+    const [isHydrated, setIsHydrated] = useState(false);
     const [activeTab, setActiveTab] = useState<'login' | 'join' | 'create'>('login');
 
     // Login Form
@@ -238,6 +239,10 @@ function HomeContent() {
     const [adminPassword, setAdminPassword] = useState('');
     const [isCreating, setIsCreating] = useState(false);
     const [createdTeamCode, setCreatedTeamCode] = useState<string | null>(null);
+
+    useEffect(() => {
+        setIsHydrated(true);
+    }, []);
 
     useEffect(() => {
         const tab = searchParams.get('tab');
@@ -448,8 +453,8 @@ function HomeContent() {
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id as any)}
                                     className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${activeTab === tab.id
-                                            ? 'bg-white shadow-md text-primary'
-                                            : 'text-slate-500 hover:text-slate-700'
+                                        ? 'bg-white shadow-md text-primary'
+                                        : 'text-slate-500 hover:text-slate-700'
                                         }`}
                                 >
                                     <tab.icon size={16} />
@@ -676,7 +681,7 @@ function HomeContent() {
                     </motion.div>
 
                     {/* Return Link */}
-                    {team && !createdTeamCode && (
+                    {isHydrated && team && !createdTeamCode && (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -692,8 +697,8 @@ function HomeContent() {
                     )}
                 </div>
             </div>
-
-
+            <div className="h-16" /> {/* Spacer for fixed footer */}
+            <Footer />
         </main>
     );
 }
@@ -701,12 +706,12 @@ function HomeContent() {
 export default function Home() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-primary/5">
+            <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-primary/5">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
                     <p className="text-sm text-slate-500 font-medium">جاري التحميل...</p>
                 </div>
-            </div>
+            </main>
         }>
             <HomeContent />
         </Suspense>

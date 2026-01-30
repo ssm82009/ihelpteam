@@ -26,6 +26,7 @@ export interface User {
     team_id: string;
     plan_type?: 'free' | 'pro';
     subscription_end?: string | null;
+    profile_image?: string;
 }
 
 export interface Task {
@@ -38,6 +39,10 @@ export interface Task {
     comment_count?: number;
     user_id?: string;
     user_name?: string;
+    user_image?: string;
+    assigned_id?: string;
+    assigned_name?: string;
+    assigned_image?: string;
     background_color?: string;
 }
 
