@@ -24,8 +24,14 @@ export async function GET() {
             LIMIT 20
         `);
 
-        // 4. Recent Users
-        const recentUsers = await db.execute('SELECT id, username, email, plan_type, subscription_end FROM users ORDER BY id DESC LIMIT 50');
+        // 4. Recent Users (Grouped by email to avoid duplicates for multi-team users)
+        const recentUsers = await db.execute(`
+            SELECT id, username, email, plan_type, subscription_end 
+            FROM users 
+            WHERE id IN (SELECT MAX(id) FROM users GROUP BY email)
+            ORDER BY id DESC 
+            LIMIT 50
+        `);
 
         return NextResponse.json({
             stats: {

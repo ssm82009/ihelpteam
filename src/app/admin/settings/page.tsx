@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRef } from 'react';
 import toast from 'react-hot-toast';
-import { Settings, Save, Image as ImageIcon, Search, Phone as AppWindow, RefreshCcw } from 'lucide-react';
+import { Settings, Save, Image as ImageIcon, Search, Phone as AppWindow, RefreshCcw, Upload } from 'lucide-react';
 
 export default function AdminSettings() {
     const [settings, setSettings] = useState({
@@ -14,6 +15,8 @@ export default function AdminSettings() {
         pwa_theme_color: '#4f46e5'
     });
     const [loading, setLoading] = useState(true);
+    const logoInputRef = useRef<HTMLInputElement>(null);
+    const faviconInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         fetch('/api/admin/settings?type=site', { cache: 'no-store' })
@@ -39,6 +42,23 @@ export default function AdminSettings() {
         } catch (error) {
             toast.error('خطأ غير متوقع');
         }
+    };
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, key: string) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 2 * 1024 * 1024) {
+            toast.error('حجم الصورة كبير جداً (الأقصى 2MB)');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64 = reader.result as string;
+            setSettings(prev => ({ ...prev, [key]: base64 }));
+            toast.success('تم تحميل الصورة محلياً، اضغط حفظ لإتمام العملية');
+        };
+        reader.readAsDataURL(file);
     };
 
     if (loading) return <div className="p-8 text-center text-slate-500">جاري تحميل إعدادات الموقع...</div>;
@@ -82,23 +102,69 @@ export default function AdminSettings() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">رابط الشعار (Logo URL)</label>
-                            <input
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-mono text-xs"
-                                value={settings.site_logo_url}
-                                onChange={(e) => setSettings({ ...settings, site_logo_url: e.target.value })}
-                                placeholder="https://path-to-image.png"
-                            />
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">شعار الموقع (Logo)</label>
+                            <div className="flex gap-2">
+                                <div className="flex-1 relative">
+                                    <input
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-mono text-[10px] pl-10"
+                                        value={settings.site_logo_url}
+                                        onChange={(e) => setSettings({ ...settings, site_logo_url: e.target.value })}
+                                        placeholder="رابط الصورة أو قم بالتحميل"
+                                    />
+                                    <button
+                                        onClick={() => logoInputRef.current?.click()}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors"
+                                        title="تحميل صورة"
+                                    >
+                                        <Upload size={18} />
+                                    </button>
+                                    <input
+                                        type="file"
+                                        ref={logoInputRef}
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={(e) => handleFileUpload(e, 'site_logo_url')}
+                                    />
+                                </div>
+                                {settings.site_logo_url && (
+                                    <div className="w-12 h-12 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0">
+                                        <img src={settings.site_logo_url} alt="Logo Preview" className="max-w-full max-h-full object-contain" />
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">رابط الفاف آيكون (Favicon URL)</label>
-                            <input
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-mono text-xs"
-                                value={settings.site_favicon_url}
-                                onChange={(e) => setSettings({ ...settings, site_favicon_url: e.target.value })}
-                                placeholder="https://path-to-icon.ico"
-                            />
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">الفاف آيكون (Favicon)</label>
+                            <div className="flex gap-2">
+                                <div className="flex-1 relative">
+                                    <input
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-mono text-[10px] pl-10"
+                                        value={settings.site_favicon_url}
+                                        onChange={(e) => setSettings({ ...settings, site_favicon_url: e.target.value })}
+                                        placeholder="رابط الأيقونة أو قم بالتحميل"
+                                    />
+                                    <button
+                                        onClick={() => faviconInputRef.current?.click()}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors"
+                                        title="تحميل أيقونة"
+                                    >
+                                        <Upload size={18} />
+                                    </button>
+                                    <input
+                                        type="file"
+                                        ref={faviconInputRef}
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={(e) => handleFileUpload(e, 'site_favicon_url')}
+                                    />
+                                </div>
+                                {settings.site_favicon_url && (
+                                    <div className="w-12 h-12 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0">
+                                        <img src={settings.site_favicon_url} alt="Favicon Preview" className="w-8 h-8 object-contain" />
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
