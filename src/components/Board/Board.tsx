@@ -76,8 +76,40 @@ export default function Board() {
 
         const newStatus = destination.droppableId as Task['status'];
 
-        // Optimistic Update
-        updateTask(draggableId, { status: newStatus });
+        // 1. Create a shallow copy of the tasks array
+        const currentTasks = [...tasks];
+
+        // 2. Find the task being moved
+        const taskIndex = currentTasks.findIndex(t => t.id === draggableId);
+        if (taskIndex === -1) return;
+
+        // 3. Create a copy of the task with updated status (avoids mutation)
+        const movedTask = { ...currentTasks[taskIndex], status: newStatus };
+
+        // 4. Remove from current array
+        currentTasks.splice(taskIndex, 1);
+
+        // 5. Find insertion point
+        // Since columns (except Plan) are filtered, we need to find where to put it
+        const targetColumnId = destination.droppableId;
+        const targetColumnTasks = targetColumnId === 'Plan'
+            ? currentTasks
+            : currentTasks.filter(t => t.status === targetColumnId);
+
+        const targetTaskAtDestination = targetColumnTasks[destination.index];
+
+        let finalIndex;
+        if (targetTaskAtDestination) {
+            finalIndex = currentTasks.indexOf(targetTaskAtDestination);
+        } else {
+            finalIndex = currentTasks.length;
+        }
+
+        // 6. Insert at calculated position
+        currentTasks.splice(finalIndex, 0, movedTask);
+
+        // 7. Update state
+        setTasks(currentTasks);
 
         // API Call
         try {
@@ -88,8 +120,7 @@ export default function Board() {
             });
         } catch (error) {
             toast.error('فشل تحديث حالة المهمة');
-            // Revert logic could be added here
-            fetchTasks();
+            fetchTasks(); // Revert on failure
         }
     };
 

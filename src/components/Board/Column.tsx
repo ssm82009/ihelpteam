@@ -186,19 +186,17 @@ export default function Column({ id, title, color, textColor, borderColor, tasks
                             ref={provided.innerRef}
                             className="min-h-[50px] space-y-4"
                         >
-                            <AnimatePresence mode='popLayout'>
-                                {tasks.map((task, index) => (
-                                    <TaskCard
-                                        key={task.id}
-                                        task={task}
-                                        index={index}
-                                        onClick={() => onTaskClick(task)}
-                                        isAdmin={isAdmin}
-                                        isShadow={id === 'Plan' && task.status !== 'Plan'}
-                                        team={team}
-                                    />
-                                ))}
-                            </AnimatePresence>
+                            {tasks.map((task, index) => (
+                                <TaskCard
+                                    key={task.id}
+                                    task={task}
+                                    index={index}
+                                    onClick={() => onTaskClick(task)}
+                                    isAdmin={isAdmin}
+                                    isShadow={id === 'Plan' && task.status !== 'Plan'}
+                                    team={team}
+                                />
+                            ))}
                             {provided.placeholder}
                         </div>
                     )}
