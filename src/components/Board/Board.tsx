@@ -164,6 +164,14 @@ export default function Board() {
     const openTask = (task: Task) => {
         setSelectedTask(task);
         setIsModalOpen(true);
+        // Clear new comment notifications for this task
+        if (currentUser?.id) {
+            fetch('/api/notifications/clear', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUser.id, taskId: task.id })
+            }).catch(e => console.error(e));
+        }
     };
 
     const getColumnStyles = useCallback((columnId: string) => {

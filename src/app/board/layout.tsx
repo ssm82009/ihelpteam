@@ -25,7 +25,32 @@ export default function BoardLayout({
     const [isTeamMenuOpen, setIsTeamMenuOpen] = useState(false);
     const [userTeams, setUserTeams] = useState<any[]>([]);
     const [isFetchingTeams, setIsFetchingTeams] = useState(false);
+    const [notificationCounts, setNotificationCounts] = useState<Record<string, number>>({});
     const [copied, setCopied] = useState(false);
+
+    const fetchNotificationCounts = async () => {
+        if (!currentUser?.id) return;
+        try {
+            const res = await fetch(`/api/notifications/count?userId=${currentUser.id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setNotificationCounts(data);
+            }
+        } catch (e) { console.error('Failed to fetch notifications', e); }
+    };
+
+    const clearTeamTaskNotifications = async (teamId: string) => {
+        if (!currentUser?.id) return;
+        try {
+            await fetch('/api/notifications/clear', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUser.id, teamId, type: 'task_created' })
+            });
+            // Refresh counts locally
+            fetchNotificationCounts();
+        } catch (e) { console.error(e); }
+    };
 
     const fetchUserTeams = async () => {
         if (!currentUser?.email) return;
@@ -36,6 +61,8 @@ export default function BoardLayout({
             if (res.ok) {
                 setUserTeams(data.teams || []);
             }
+            // Also fetch notifications
+            fetchNotificationCounts();
         } catch (error) {
             console.error('Failed to fetch teams', error);
         } finally {
@@ -106,6 +133,20 @@ export default function BoardLayout({
                 .catch(err => console.error('Sync failed', err));
         }
     }, [currentUser?.email]);
+
+    // Clear task notifications for current team when active
+    useEffect(() => {
+        if (team?.id && currentUser?.id) {
+            clearTeamTaskNotifications(team.id);
+            // Poll for notifications every minute
+            notificationInterval.current = setInterval(fetchNotificationCounts, 60000);
+        }
+        return () => {
+            if (notificationInterval.current) clearInterval(notificationInterval.current);
+        };
+    }, [team?.id, currentUser?.id]);
+
+    const notificationInterval = useRef<NodeJS.Timeout | null>(null);
 
     const themes = [
         { id: 'light-pro', name: 'فاتح احترافي', icon: <Sun size={14} />, class: 'bg-white text-gray-800' },
@@ -253,8 +294,13 @@ export default function BoardLayout({
                                 onClick={() => setIsTeamMenuOpen(!isTeamMenuOpen)}
                                 className="flex items-center gap-2 md:gap-3 hover:bg-secondary/20 p-1.5 md:px-4 md:py-2.5 rounded-[20px] md:rounded-2xl transition-all active:scale-95 group"
                             >
-                                <div className="h-9 w-9 md:h-10 md:w-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary font-black shadow-sm group-hover:scale-105 transition-transform">
+                                <div className="h-9 w-9 md:h-10 md:w-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary font-black shadow-sm group-hover:scale-105 transition-transform relative">
                                     {team.name.charAt(0)}
+                                    {Object.values(notificationCounts).reduce((a, b) => a + b, 0) > 0 && (
+                                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-[9px] text-white border-2 border-card animate-bounce">
+                                            {Object.values(notificationCounts).reduce((a, b) => a + b, 0) > 9 ? '9+' : Object.values(notificationCounts).reduce((a, b) => a + b, 0)}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="hidden sm:block text-right">
                                     <div className="flex items-center gap-2">
@@ -285,9 +331,14 @@ export default function BoardLayout({
                                                     : 'hover:bg-muted text-foreground border border-transparent'
                                                     }`}
                                             >
-                                                <div className={`h-9 w-9 rounded-xl flex items-center justify-center text-sm font-black shadow-sm ${t.id === team.id ? 'bg-primary text-white' : 'bg-muted-foreground/20 text-muted-foreground'
+                                                <div className={`h-9 w-9 rounded-xl flex items-center justify-center text-sm font-black shadow-sm relative ${t.id === team.id ? 'bg-primary text-white' : 'bg-muted-foreground/20 text-muted-foreground'
                                                     }`}>
                                                     {t.name.charAt(0)}
+                                                    {notificationCounts[t.id] > 0 && (
+                                                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-[9px] text-white border-2 border-card">
+                                                            {notificationCounts[t.id] > 9 ? '9+' : notificationCounts[t.id]}
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <div className="flex-1 text-right overflow-hidden">
                                                     <div className="text-sm font-black truncate">{t.name}</div>

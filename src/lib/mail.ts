@@ -26,6 +26,13 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
     }
 }
 
+export async function sendBatchEmails(recipients: string[], subject: string, html: string) {
+    console.log(`Sending batch emails to ${recipients.length} recipients`);
+    // Send in parallel
+    const promises = recipients.map(email => sendEmail({ to: email, subject, html }));
+    return Promise.all(promises);
+}
+
 export async function sendTaskNotification(to: string, taskTitle: string, status: string, teamName: string) {
     const statusMap: Record<string, string> = {
         'Plan': 'الخطة',
