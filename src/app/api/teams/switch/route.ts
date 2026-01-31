@@ -21,6 +21,12 @@ export async function POST(request: Request) {
 
         const user = result.rows[0];
 
+        const fullTeamResult = await db.execute({
+            sql: 'SELECT * FROM teams WHERE id = ?',
+            args: [user.team_id as string],
+        });
+        const team = fullTeamResult.rows[0];
+
         return NextResponse.json({
             user: {
                 id: user.id,
@@ -30,7 +36,7 @@ export async function POST(request: Request) {
                 plan_type: user.plan_type || 'free',
                 subscription_end: user.subscription_end
             },
-            team: { id: user.team_id, name: user.team_name, secret_code: user.secret_code, admin_id: user.admin_id }
+            team
         });
     } catch (error: any) {
         console.error('Error switching team:', error);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { useStore, Task } from '@/lib/store';
 import Column from './Column';
@@ -10,14 +10,15 @@ import { toast } from 'react-hot-toast';
 
 
 const AVAILABLE_COLORS: Record<string, any> = {
-    blue: { color: 'bg-status-plan/10', textColor: 'text-status-plan', borderColor: 'border-status-plan/20' },
-    orange: { color: 'bg-status-exec/10', textColor: 'text-status-exec', borderColor: 'border-status-exec/20' },
-    purple: { color: 'bg-status-review/10', textColor: 'text-status-review', borderColor: 'border-status-review/20' },
-    green: { color: 'bg-status-done/10', textColor: 'text-status-done', borderColor: 'border-status-done/20' },
-    pink: { color: 'bg-purple-500/10', textColor: 'text-purple-600', borderColor: 'border-purple-500/20' },
-    red: { color: 'bg-rose-500/10', textColor: 'text-rose-600', borderColor: 'border-rose-500/20' },
-    yellow: { color: 'bg-amber-500/10', textColor: 'text-amber-600', borderColor: 'border-amber-500/20' },
-    cyan: { color: 'bg-cyan-500/10', textColor: 'text-cyan-600', borderColor: 'border-cyan-500/20' },
+    blue: { color: 'bg-[#AFBFDF]', textColor: 'text-slate-700', borderColor: 'border-[#AFBFDF]/50' },
+    orange: { color: 'bg-[#F6D693]', textColor: 'text-slate-700', borderColor: 'border-[#F6D693]/50' },
+    purple: { color: 'bg-[#D3ABDE]', textColor: 'text-slate-700', borderColor: 'border-[#D3ABDE]/50' },
+    green: { color: 'bg-[#DAE6A3]', textColor: 'text-slate-700', borderColor: 'border-[#DAE6A3]/50' },
+    pink: { color: 'bg-[#F6A192]', textColor: 'text-slate-700', borderColor: 'border-[#F6A192]/50' },
+    red: { color: 'bg-red-200', textColor: 'text-red-800', borderColor: 'border-red-300' },
+    yellow: { color: 'bg-amber-100', textColor: 'text-amber-700', borderColor: 'border-amber-200' },
+    cyan: { color: 'bg-cyan-100', textColor: 'text-cyan-700', borderColor: 'border-cyan-200' },
+    lime: { color: 'bg-[#DAE6A3]', textColor: 'text-slate-700', borderColor: 'border-[#DAE6A3]/50' },
 };
 
 export default function Board() {
@@ -44,10 +45,20 @@ export default function Board() {
     const fetchTeamInfo = async () => {
         try {
             if (!team?.id) return;
-            const res = await fetch(`/api/teams/info?id=${team.id}`);
+            // Add timestamp to prevent caching
+            const res = await fetch(`/api/teams/info?id=${team.id}&t=${Date.now()}`, {
+                cache: 'no-store',
+                headers: {
+                    'Pragma': 'no-cache',
+                    'Cache-Control': 'no-cache'
+                }
+            });
             if (res.ok) {
                 const refreshedTeam = await res.json();
-                setTeam(refreshedTeam);
+                // Only update if data actually changed to prevent flicker
+                if (JSON.stringify(refreshedTeam) !== JSON.stringify(team)) {
+                    setTeam(refreshedTeam);
+                }
             }
         } catch (e) {
             console.error('Failed to refresh team info', e);
@@ -155,25 +166,53 @@ export default function Board() {
         setIsModalOpen(true);
     };
 
-    const getColumnStyles = (columnId: string) => {
+    const getColumnStyles = useCallback((columnId: string) => {
         const colorMap: Record<string, string> = {
             'Plan': team?.color_plan || 'blue',
             'Execution': team?.color_execution || 'orange',
             'Review': team?.color_review || 'purple',
-            'Completed': team?.color_completed || 'green',
+            'Completed': team?.color_completed || 'lime',
             'Notes': team?.color_notes || 'pink'
         };
-        const colorId = colorMap[columnId];
-        return AVAILABLE_COLORS[colorId] || AVAILABLE_COLORS.blue;
-    };
+        let colorId = colorMap[columnId] || 'blue';
 
-    const COLUMNS = [
+        // Map legacy database values to new color IDs
+        const legacyMap: Record<string, string> = {
+            'bg-status-plan/10': 'blue',
+            'bg-status-exec/10': 'orange',
+            'bg-status-review/10': 'purple',
+            'bg-status-done/10': 'green',
+            'bg-purple-500/10': 'pink',
+            'bg-blue-500': 'blue',
+            'bg-orange-500': 'orange',
+            'bg-purple-500': 'purple',
+            'bg-emerald-500': 'green',
+            'bg-pink-500': 'pink',
+        };
+
+        if (legacyMap[colorId]) {
+            colorId = legacyMap[colorId];
+        }
+
+        // Normalize to lowercase to check against keys
+        colorId = colorId.toLowerCase();
+
+        // Special case for execution default if it looks like the old default
+        if (columnId === 'Execution' && (colorId === 'bg-status-exec/10' || colorId === 'orange')) {
+            return AVAILABLE_COLORS['orange'];
+        }
+
+        // console.log(`Column: ${columnId}, ColorID: ${colorId}`); // Debug log
+        return AVAILABLE_COLORS[colorId] || AVAILABLE_COLORS.blue;
+    }, [team?.color_plan, team?.color_execution, team?.color_review, team?.color_completed, team?.color_notes]);
+
+    const COLUMNS = useMemo(() => [
         { id: 'Plan', title: team?.title_plan || 'الخطة', ...getColumnStyles('Plan') },
         { id: 'Execution', title: team?.title_execution || 'جاري العمل', ...getColumnStyles('Execution') },
         { id: 'Review', title: team?.title_review || 'مراجعة', ...getColumnStyles('Review') },
         { id: 'Completed', title: team?.title_completed || 'مكتمل', ...getColumnStyles('Completed') },
         { id: 'Notes', title: team?.title_notes || 'ملاحظات', ...getColumnStyles('Notes') },
-    ] as const;
+    ], [team, getColumnStyles]);
 
     const handleUpdateColumnTitle = async (columnId: string, newTitle: string) => {
         if (!isAdmin || !team?.id) return;

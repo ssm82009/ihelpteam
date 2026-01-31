@@ -92,7 +92,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({
             user: { id: userId, username: finalUsername, email, team_id: team.id },
-            team: { id: team.id, name: team.name, description: team.description, secret_code: team.secret_code, admin_id: team.admin_id }
+            team: team
         });
     } catch (error: any) {
         console.error('Error joining team:', error);

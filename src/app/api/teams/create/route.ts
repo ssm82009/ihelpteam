@@ -76,12 +76,15 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'فشل في تسجيل بيانات المسؤول', details: userError.message }, { status: 500 });
         }
 
+        // Fetch the full team object to return all fields (titles, colors, etc.)
+        const fullTeamResult = await db.execute({
+            sql: 'SELECT * FROM teams WHERE id = ?',
+            args: [teamId],
+        });
+        const fullTeam = fullTeamResult.rows[0];
+
         return NextResponse.json({
-            id: teamId,
-            name,
-            description,
-            secret_code,
-            admin_id: userId,
+            ...fullTeam,
             user: { id: userId, username: admin_name, email: admin_email, team_id: teamId }
         });
     } catch (error: any) {

@@ -24,14 +24,15 @@ interface ColumnProps {
 }
 
 const AVAILABLE_COLORS = [
-    { id: 'blue', color: 'bg-status-plan/10', textColor: 'text-status-plan', borderColor: 'border-status-plan/20', preview: 'bg-blue-500' },
-    { id: 'orange', color: 'bg-status-exec/10', textColor: 'text-status-exec', borderColor: 'border-status-exec/20', preview: 'bg-orange-500' },
-    { id: 'purple', color: 'bg-status-review/10', textColor: 'text-status-review', borderColor: 'border-status-review/20', preview: 'bg-purple-500' },
-    { id: 'green', color: 'bg-status-done/10', textColor: 'text-status-done', borderColor: 'border-status-done/20', preview: 'bg-emerald-500' },
-    { id: 'pink', color: 'bg-purple-500/10', textColor: 'text-purple-600', borderColor: 'border-purple-500/20', preview: 'bg-pink-500' },
-    { id: 'red', color: 'bg-rose-500/10', textColor: 'text-rose-600', borderColor: 'border-rose-500/20', preview: 'bg-rose-500' },
-    { id: 'yellow', color: 'bg-amber-500/10', textColor: 'text-amber-600', borderColor: 'border-amber-500/20', preview: 'bg-amber-500' },
-    { id: 'cyan', color: 'bg-cyan-500/10', textColor: 'text-cyan-600', borderColor: 'border-cyan-500/20', preview: 'bg-cyan-500' },
+    { id: 'blue', color: 'bg-[#AFBFDF]', textColor: 'text-slate-700', borderColor: 'border-[#AFBFDF]/50', preview: 'bg-[#AFBFDF]' },
+    { id: 'orange', color: 'bg-[#F6D693]', textColor: 'text-slate-700', borderColor: 'border-[#F6D693]/50', preview: 'bg-[#F6D693]' },
+    { id: 'purple', color: 'bg-[#D3ABDE]', textColor: 'text-slate-700', borderColor: 'border-[#D3ABDE]/50', preview: 'bg-[#D3ABDE]' },
+    { id: 'green', color: 'bg-[#DAE6A3]', textColor: 'text-slate-700', borderColor: 'border-[#DAE6A3]/50', preview: 'bg-[#DAE6A3]' },
+    { id: 'lime', color: 'bg-[#DAE6A3]', textColor: 'text-slate-700', borderColor: 'border-[#DAE6A3]/50', preview: 'bg-[#DAE6A3]' },
+    { id: 'pink', color: 'bg-[#F6A192]', textColor: 'text-slate-700', borderColor: 'border-[#F6A192]/50', preview: 'bg-[#F6A192]' },
+    { id: 'red', color: 'bg-red-200', textColor: 'text-red-800', borderColor: 'border-red-300', preview: 'bg-red-500' },
+    { id: 'yellow', color: 'bg-amber-100', textColor: 'text-amber-700', borderColor: 'border-amber-200', preview: 'bg-amber-500' },
+    { id: 'cyan', color: 'bg-cyan-100', textColor: 'text-cyan-700', borderColor: 'border-cyan-200', preview: 'bg-cyan-500' },
 ];
 
 export default function Column({ id, title, color, textColor, borderColor, tasks, onCreateTask, onTaskClick, isAdmin, onUpdateTitle, onUpdateColor, team }: ColumnProps) {
@@ -64,7 +65,7 @@ export default function Column({ id, title, color, textColor, borderColor, tasks
     };
 
     return (
-        <div className="w-full md:flex-1 min-w-0 md:min-w-[280px] max-w-[450px] shrink-0 h-fit md:max-h-full flex flex-col group/column transition-all duration-300 border border-border pb-4 column-container rounded-2xl">
+        <div className={`w-full md:flex-1 min-w-0 md:min-w-[280px] max-w-[450px] shrink-0 h-fit md:max-h-full flex flex-col group/column transition-all duration-300 border border-border pb-4 column-container rounded-2xl relative ${showColorPicker ? 'z-[100]' : 'z-0'}`}>
             {/* Column Header Capsule */}
             <div className={`p-2.5 mb-6 flex items-center justify-between rounded-t-2xl ${color} ${borderColor} border-b shadow-sm`}>
                 <div className="flex items-center gap-3 flex-1 px-2">
@@ -148,7 +149,9 @@ export default function Column({ id, title, color, textColor, borderColor, tasks
                                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                        className="absolute top-full left-0 md:left-auto md:right-0 mt-2 p-2.5 bg-card border border-border rounded-2xl shadow-2xl z-[150] min-w-[140px] flex flex-wrap gap-2 justify-center"
+                                        className={`absolute top-full mt-2 p-2.5 bg-card border border-border rounded-2xl shadow-2xl z-[150] min-w-[140px] flex flex-wrap gap-2 justify-center
+                                            ${id === 'Notes' ? 'left-0' : 'left-0 md:left-auto md:right-0'}
+                                        `}
                                     >
                                         {AVAILABLE_COLORS.map((c) => (
                                             <button
