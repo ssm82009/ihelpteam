@@ -7,8 +7,29 @@ export async function POST(request: Request) {
     try {
         const { secret_code, username, email, password } = await request.json();
 
-        if (!secret_code || !username || !email || !password) {
-            return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
+        if (!secret_code || !email) {
+            return NextResponse.json({ error: 'Email and Team Code are required' }, { status: 400 });
+        }
+
+        let hashedPassword = '';
+        let finalUsername = username;
+
+        // If username or password missing, check if user exists
+        if (!username || !password) {
+            const existingUserInfo = await db.execute({
+                sql: 'SELECT username, password FROM users WHERE email = ? ORDER BY created_at DESC LIMIT 1',
+                args: [email],
+            });
+
+            if (existingUserInfo.rows.length === 0) {
+                return NextResponse.json({ error: 'المستخدم غير موجود. يرجى إدخال جميع البيانات للتسجيل لأول مرة.' }, { status: 400 });
+            }
+
+            finalUsername = username || (existingUserInfo.rows[0].username as string);
+            hashedPassword = existingUserInfo.rows[0].password as string;
+        } else {
+            hashedPassword = await bcrypt.hash(password, 10);
+            finalUsername = username;
         }
 
         // 1. Verify Team
@@ -18,7 +39,7 @@ export async function POST(request: Request) {
         });
 
         if (teamResult.rows.length === 0) {
-            return NextResponse.json({ error: 'Team not found with this code' }, { status: 404 });
+            return NextResponse.json({ error: 'لم يتم العثور على فريق بهذا الكود' }, { status: 404 });
         }
 
         const team = teamResult.rows[0];
@@ -30,7 +51,7 @@ export async function POST(request: Request) {
         });
 
         if (userCheck.rows.length > 0) {
-            return NextResponse.json({ error: 'You are already a member of this team' }, { status: 400 });
+            return NextResponse.json({ error: 'أنت عضو بالفعل في هذا الفريق' }, { status: 400 });
         }
 
         // 3. Check team member limits based on admin's plan
@@ -61,21 +82,20 @@ export async function POST(request: Request) {
         const userPlan = (existingUserResult.rows[0]?.plan_type as any) || 'free';
         const subEnd = existingUserResult.rows[0]?.subscription_end || null;
 
-        // 5. Hash Password & Create User
-        const hashedPassword = await bcrypt.hash(password, 10);
+        // 5. Create User
         const userId = uuidv4();
 
         await db.execute({
-            sql: 'INSERT INTO users (id, username, email, password, team_id, plan_type, subscription_end) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            args: [userId, username, email, hashedPassword, team.id as string, userPlan, subEnd],
+            sql: 'INSERT INTO users (id, username, email, password, team_id, plan_type, subscription_end, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)',
+            args: [userId, finalUsername, email, hashedPassword, team.id as string, userPlan, subEnd],
         });
 
         return NextResponse.json({
-            user: { id: userId, username, email, team_id: team.id },
+            user: { id: userId, username: finalUsername, email, team_id: team.id },
             team: { id: team.id, name: team.name, description: team.description, secret_code: team.secret_code, admin_id: team.admin_id }
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error joining team:', error);
-        return NextResponse.json({ error: 'Failed to join team' }, { status: 500 });
+        return NextResponse.json({ error: error.message || 'Failed to join team' }, { status: 500 });
     }
 }

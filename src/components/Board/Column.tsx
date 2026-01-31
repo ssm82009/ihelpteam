@@ -145,9 +145,9 @@ export default function Column({ id, title, color, textColor, borderColor, tasks
                             <AnimatePresence>
                                 {showColorPicker && (
                                     <motion.div
-                                        initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
                                         className="absolute top-full left-0 md:left-auto md:right-0 mt-2 p-2.5 bg-card border border-border rounded-2xl shadow-2xl z-[150] min-w-[140px] flex flex-wrap gap-2 justify-center"
                                     >
                                         {AVAILABLE_COLORS.map((c) => (
@@ -166,14 +166,12 @@ export default function Column({ id, title, color, textColor, borderColor, tasks
                             </AnimatePresence>
                         </div>
                     )}
-                    {isAdmin && (
-                        <button
-                            onClick={() => setIsAdding(true)}
-                            className={`p-1.5 hover:bg-background/40 rounded-lg transition-colors ${textColor} opacity-60 hover:opacity-100`}
-                        >
-                            <Plus size={14} />
-                        </button>
-                    )}
+                    <button
+                        onClick={() => setIsAdding(true)}
+                        className={`p-1.5 hover:bg-background/40 rounded-lg transition-colors ${textColor} opacity-60 hover:opacity-100`}
+                    >
+                        <Plus size={14} />
+                    </button>
                 </div>
             </div>
 
@@ -202,53 +200,51 @@ export default function Column({ id, title, color, textColor, borderColor, tasks
                     )}
                 </Droppable>
 
-                {isAdmin && (
-                    isAdding ? (
-                        <motion.form
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            onSubmit={handleSubmit}
-                            className="bg-card p-4 rounded-xl border border-border shadow-md ring-2 ring-primary/5"
-                        >
-                            <textarea
-                                autoFocus
-                                placeholder="ما الذي يجب فعله؟"
-                                className="w-full text-sm font-bold resize-none outline-none text-foreground placeholder-muted-foreground bg-transparent mb-3"
-                                rows={2}
-                                value={newTaskTitle}
-                                onChange={(e) => setNewTaskTitle(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                        e.preventDefault();
-                                        handleSubmit(e);
-                                    }
-                                }}
-                            />
-                            <div className="flex justify-end gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsAdding(false)}
-                                    className="px-3 py-1.5 hover:bg-muted rounded-lg text-muted-foreground text-xs font-bold transition-colors"
-                                >
-                                    إلغاء
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="px-4 py-1.5 bg-primary text-primary-foreground text-xs font-black rounded-lg hover:opacity-90 transition shadow-lg shadow-primary/10"
-                                >
-                                    إضافة
-                                </button>
-                            </div>
-                        </motion.form>
-                    ) : (
-                        <button
-                            onClick={() => setIsAdding(true)}
-                            className="w-full py-4 flex items-center justify-center gap-2 text-muted-foreground hover:text-primary hover:bg-card rounded-xl border-2 border-dashed border-border/50 hover:border-primary/50 transition-all font-bold text-sm"
-                        >
-                            <Plus size={18} />
-                            <span>إضافة</span>
-                        </button>
-                    )
+                {isAdding ? (
+                    <motion.form
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        onSubmit={handleSubmit}
+                        className="bg-card p-4 rounded-xl border border-border shadow-md ring-2 ring-primary/5"
+                    >
+                        <textarea
+                            autoFocus
+                            placeholder="ما الذي يجب فعله؟"
+                            className="w-full text-sm font-bold resize-none outline-none text-foreground placeholder-muted-foreground bg-transparent mb-3"
+                            rows={2}
+                            value={newTaskTitle}
+                            onChange={(e) => setNewTaskTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSubmit(e);
+                                }
+                            }}
+                        />
+                        <div className="flex justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setIsAdding(false)}
+                                className="px-3 py-1.5 hover:bg-muted rounded-lg text-muted-foreground text-xs font-bold transition-colors"
+                            >
+                                إلغاء
+                            </button>
+                            <button
+                                type="submit"
+                                className="px-4 py-1.5 bg-primary text-primary-foreground text-xs font-black rounded-lg hover:opacity-90 transition shadow-lg shadow-primary/10"
+                            >
+                                إضافة
+                            </button>
+                        </div>
+                    </motion.form>
+                ) : (
+                    <button
+                        onClick={() => setIsAdding(true)}
+                        className="w-full py-4 flex items-center justify-center gap-2 text-muted-foreground hover:text-primary hover:bg-card rounded-xl border-2 border-dashed border-border/50 hover:border-primary/50 transition-all font-bold text-sm"
+                    >
+                        <Plus size={18} />
+                        <span>إضافة</span>
+                    </button>
                 )}
             </div>
         </div>

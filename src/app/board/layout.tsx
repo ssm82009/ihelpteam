@@ -8,6 +8,7 @@ import { Shield, ChevronDown, Check, Layout, Plus, Star, CreditCard, Users, Pale
 import MemberModal from '@/components/Board/MemberModal';
 import SubscriptionModal from '@/components/Board/SubscriptionModal';
 import CreateTeamModal from '@/components/Board/CreateTeamModal';
+import JoinTeamModal from '@/components/Board/JoinTeamModal';
 import { toast } from 'react-hot-toast';
 
 export default function BoardLayout({
@@ -160,6 +161,7 @@ export default function BoardLayout({
     };
 
     const [isCreateTeamOpen, setIsCreateTeamOpen] = useState(false);
+    const [isJoinTeamOpen, setIsJoinTeamOpen] = useState(false);
 
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -296,7 +298,20 @@ export default function BoardLayout({
                                         ))}
                                     </div>
 
-                                    <div className="mt-3 pt-3 border-t border-border/50 px-3">
+                                    <div className="mt-3 pt-3 border-t border-border/50 px-3 space-y-2">
+                                        <button
+                                            onClick={() => {
+                                                setIsJoinTeamOpen(true);
+                                                setIsTeamMenuOpen(false);
+                                            }}
+                                            className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-primary bg-primary/5 hover:bg-primary/10 transition-all font-black text-xs border border-primary/10"
+                                        >
+                                            <div className="h-9 w-9 rounded-xl bg-primary/20 flex items-center justify-center">
+                                                <Users size={18} />
+                                            </div>
+                                            <span>انضمام لفريق</span>
+                                        </button>
+
                                         {currentUser.plan_type === 'pro' ? (
                                             <button
                                                 onClick={() => {
@@ -562,6 +577,10 @@ export default function BoardLayout({
             <CreateTeamModal
                 isOpen={isCreateTeamOpen}
                 onClose={() => setIsCreateTeamOpen(false)}
+            />
+            <JoinTeamModal
+                isOpen={isJoinTeamOpen}
+                onClose={() => setIsJoinTeamOpen(false)}
             />
         </div >
     );

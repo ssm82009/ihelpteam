@@ -104,7 +104,7 @@ const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({ task, index, onCli
                     >
                         {task.title}
                     </h3>
-                    {isAdmin && !isShadow && (
+                    {!isShadow && (
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();

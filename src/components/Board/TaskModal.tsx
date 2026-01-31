@@ -49,9 +49,7 @@ export default function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
             setStatus(task.status);
             setCurrentBg(task.background_color || '#ffffff');
             setAssignedId(task.assigned_id);
-            if (isAdmin) {
-                fetchMembers();
-            }
+            fetchMembers();
         }
     }, [isOpen, task.id, task.title, task.status, task.background_color, task.assigned_id]);
 
@@ -325,18 +323,16 @@ export default function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
                                                     <p className="text-[9px] text-muted-foreground font-bold">مُكلف بهذه المهمة</p>
                                                 </div>
                                             </div>
-                                            {isAdmin && (
-                                                <button
-                                                    onClick={() => setIsAssigning(!isAssigning)}
-                                                    className="p-1.5 hover:bg-primary/10 rounded-lg text-primary transition-colors"
-                                                >
-                                                    <Edit2 size={14} />
-                                                </button>
-                                            )}
+                                            <button
+                                                onClick={() => setIsAssigning(!isAssigning)}
+                                                className="p-1.5 hover:bg-primary/10 rounded-lg text-primary transition-colors"
+                                            >
+                                                <Edit2 size={14} />
+                                            </button>
                                         </div>
                                     ) : (
                                         <button
-                                            onClick={() => isAdmin && setIsAssigning(!isAssigning)}
+                                            onClick={() => setIsAssigning(!isAssigning)}
                                             className="w-full py-3 px-4 flex items-center justify-center gap-2 bg-muted/30 border border-dashed border-border rounded-2xl text-muted-foreground hover:text-primary hover:border-primary/50 transition-all text-xs font-bold"
                                         >
                                             <UserPlus size={16} />
@@ -345,7 +341,7 @@ export default function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
                                     )}
 
                                     <AnimatePresence>
-                                        {isAssigning && isAdmin && (
+                                        {isAssigning && (
                                             <motion.div
                                                 initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                                 animate={{ opacity: 1, y: 0, scale: 1 }}

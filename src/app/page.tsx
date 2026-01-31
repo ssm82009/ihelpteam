@@ -229,6 +229,8 @@ function HomeContent() {
     const [joinName, setJoinName] = useState('');
     const [joinEmail, setJoinEmail] = useState('');
     const [joinPassword, setJoinPassword] = useState('');
+    const [quickJoinEmail, setQuickJoinEmail] = useState('');
+    const [quickJoinCode, setQuickJoinCode] = useState('');
     const [isJoining, setIsJoining] = useState(false);
 
     // Create Form State
@@ -255,6 +257,10 @@ function HomeContent() {
         }
         if (code) {
             setJoinCode(code.toUpperCase());
+            setQuickJoinCode(code.toUpperCase());
+        }
+        if (currentUser?.email) {
+            setQuickJoinEmail(currentUser.email);
         }
         if (success === 'payment_completed') {
             toast.success('مبروك! تم تفعيل الباقة الاحترافية بنجاح.');
@@ -293,19 +299,24 @@ function HomeContent() {
         }
     };
 
-    const handleJoin = async (e: React.FormEvent) => {
+    const handleJoin = async (e: React.FormEvent, isQuick = false) => {
         e.preventDefault();
         setIsJoining(true);
         try {
+            const body: any = {
+                secret_code: isQuick ? quickJoinCode : joinCode,
+                email: isQuick ? quickJoinEmail : joinEmail,
+            };
+
+            if (!isQuick) {
+                body.username = joinName;
+                body.password = joinPassword;
+            }
+
             const res = await fetch('/api/teams/join', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    secret_code: joinCode,
-                    username: joinName,
-                    email: joinEmail,
-                    password: joinPassword
-                }),
+                body: JSON.stringify(body),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
@@ -408,7 +419,7 @@ function HomeContent() {
                 <KanbanIllustration />
 
                 {/* Form Section */}
-                <div className="w-full max-w-md">
+                <div className={`w-full transition-all duration-500 ${activeTab === 'join' ? 'max-w-4xl' : 'max-w-md'}`}>
                     {/* Header */}
                     <div className="text-center lg:text-right mb-8">
                         <motion.div
@@ -514,68 +525,124 @@ function HomeContent() {
                             )}
 
                             {activeTab === 'join' && (
-                                <motion.form
+                                <motion.div
                                     key="join"
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -20 }}
-                                    onSubmit={handleJoin}
-                                    className="space-y-4"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    className="flex flex-col lg:flex-row gap-8 items-stretch"
                                 >
-                                    <div className="grid grid-cols-1 gap-4">
-                                        <div className="relative group">
-                                            <LogIn className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-primary transition-colors" />
-                                            <input
-                                                type="text"
-                                                required
-                                                className="w-full pr-12 pl-4 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-slate-800 placeholder:text-slate-400 font-mono tracking-wider uppercase"
-                                                placeholder="الكود السري للفريق"
-                                                value={joinCode}
-                                                onChange={(e) => setJoinCode(e.target.value)}
-                                            />
+                                    {/* Existing User Section */}
+                                    <div className="flex-1 flex flex-col">
+                                        <div className="mb-6 text-center lg:text-right">
+                                            <h3 className="text-lg font-black text-slate-800 mb-1">انضمام سريع</h3>
+                                            <p className="text-xs text-slate-500">للمسجلين مسبقاً في فرق أخرى</p>
                                         </div>
-                                        <div className="relative group">
-                                            <UserIcon className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-primary transition-colors" />
-                                            <input
-                                                type="text"
-                                                required
-                                                className="w-full pr-12 pl-4 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-slate-800 placeholder:text-slate-400"
-                                                placeholder="اسمك بالكامل"
-                                                value={joinName}
-                                                onChange={(e) => setJoinName(e.target.value)}
-                                            />
-                                        </div>
-                                        <div className="relative group">
-                                            <Mail className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-primary transition-colors" />
-                                            <input
-                                                type="email"
-                                                required
-                                                className="w-full pr-12 pl-4 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-slate-800 placeholder:text-slate-400"
-                                                placeholder="البريد الإلكتروني"
-                                                value={joinEmail}
-                                                onChange={(e) => setJoinEmail(e.target.value)}
-                                            />
-                                        </div>
-                                        <div className="relative group">
-                                            <Lock className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-primary transition-colors" />
-                                            <input
-                                                type="password"
-                                                required
-                                                className="w-full pr-12 pl-4 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-slate-800 placeholder:text-slate-400"
-                                                placeholder="كلمة مرور جديدة"
-                                                value={joinPassword}
-                                                onChange={(e) => setJoinPassword(e.target.value)}
-                                            />
-                                        </div>
+                                        <form onSubmit={(e) => handleJoin(e, true)} className="space-y-4 flex-1 flex flex-col">
+                                            <div className="space-y-4 flex-1">
+                                                <div className="relative group">
+                                                    <Mail className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+                                                    <input
+                                                        type="email"
+                                                        required
+                                                        className="w-full pr-12 pl-4 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-slate-800 placeholder:text-slate-400"
+                                                        placeholder="البريد الإلكتروني المسجل"
+                                                        value={quickJoinEmail}
+                                                        onChange={(e) => setQuickJoinEmail(e.target.value)}
+                                                    />
+                                                </div>
+                                                <div className="relative group">
+                                                    <LogIn className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+                                                    <input
+                                                        type="text"
+                                                        required
+                                                        className="w-full pr-12 pl-4 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-slate-800 placeholder:text-slate-400 font-mono tracking-wider uppercase"
+                                                        placeholder="كود الفريق الجديد"
+                                                        value={quickJoinCode}
+                                                        onChange={(e) => setQuickJoinCode(e.target.value)}
+                                                    />
+                                                </div>
+                                                <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl">
+                                                    <p className="text-[10px] text-amber-700 leading-relaxed">
+                                                        * سيتم استخدام اسمك وكلمة مرورك الحالية للانضمام لهذا الفريق تلقائياً.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="submit"
+                                                disabled={isJoining}
+                                                className="w-full mt-auto bg-slate-800 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-slate-900 transition-all disabled:opacity-70"
+                                            >
+                                                {isJoining ? 'جاري الانضمام...' : 'انضم الآن'}
+                                            </button>
+                                        </form>
                                     </div>
-                                    <button
-                                        type="submit"
-                                        disabled={isJoining}
-                                        className="w-full bg-gradient-to-r from-primary to-primary/90 text-white py-4 rounded-2xl font-bold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-70"
-                                    >
-                                        {isJoining ? 'جاري الانضمام...' : 'انضم الآن'}
-                                    </button>
-                                </motion.form>
+
+                                    {/* Vertical Divider */}
+                                    <div className="hidden lg:block w-px bg-slate-200 self-stretch my-2" />
+                                    <div className="lg:hidden h-px bg-slate-200 w-full my-2" />
+
+                                    {/* New User Section */}
+                                    <div className="flex-1 flex flex-col">
+                                        <div className="mb-6 text-center lg:text-right">
+                                            <h3 className="text-lg font-black text-slate-800 mb-1">تسجيل جديد</h3>
+                                            <p className="text-xs text-slate-500">إذا كنت تستخدم المنصة لأول مرة</p>
+                                        </div>
+                                        <form onSubmit={(e) => handleJoin(e, false)} className="space-y-4 flex-1">
+                                            <div className="relative group">
+                                                <LogIn className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    className="w-full pr-12 pl-4 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-slate-800 placeholder:text-slate-400 font-mono tracking-wider uppercase"
+                                                    placeholder="كود الفريق"
+                                                    value={joinCode}
+                                                    onChange={(e) => setJoinCode(e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="relative group">
+                                                <UserIcon className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    className="w-full pr-12 pl-4 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-slate-800 placeholder:text-slate-400"
+                                                    placeholder="اسمك بالكامل"
+                                                    value={joinName}
+                                                    onChange={(e) => setJoinName(e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="relative group">
+                                                <Mail className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+                                                <input
+                                                    type="email"
+                                                    required
+                                                    className="w-full pr-12 pl-4 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-slate-800 placeholder:text-slate-400"
+                                                    placeholder="البريد الإلكتروني"
+                                                    value={joinEmail}
+                                                    onChange={(e) => setJoinEmail(e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="relative group">
+                                                <Lock className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+                                                <input
+                                                    type="password"
+                                                    required
+                                                    className="w-full pr-12 pl-4 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-slate-800 placeholder:text-slate-400"
+                                                    placeholder="كلمة مرور جديدة"
+                                                    value={joinPassword}
+                                                    onChange={(e) => setJoinPassword(e.target.value)}
+                                                />
+                                            </div>
+                                            <button
+                                                type="submit"
+                                                disabled={isJoining}
+                                                className="w-full bg-gradient-to-r from-primary to-primary/90 text-white py-4 rounded-2xl font-bold shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-70"
+                                            >
+                                                {isJoining ? 'جاري التسجيل...' : 'إنشاء حساب وانضمام'}
+                                            </button>
+                                        </form>
+                                    </div>
+                                </motion.div>
                             )}
 
                             {activeTab === 'create' && (
