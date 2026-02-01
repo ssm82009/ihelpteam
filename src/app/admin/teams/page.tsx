@@ -18,7 +18,7 @@ export default function AdminTeams() {
                             <th className="px-6 py-4">اسم الفريق</th>
                             <th className="px-6 py-4">الكود السري</th>
                             <th className="px-6 py-4">عدد الأعضاء</th>
-                            <th className="px-6 py-4">المسؤول</th>
+                            <th className="px-6 py-4">رئيس الفريق</th>
                         </tr>
                     </thead>
                     <tbody>

@@ -73,7 +73,7 @@ export async function POST(request: Request) {
             console.error('Database error creating user:', userError);
             // If user creation fails, we should ideally delete the team we just created
             await db.execute({ sql: 'DELETE FROM teams WHERE id = ?', args: [teamId] });
-            return NextResponse.json({ error: 'فشل في تسجيل بيانات المسؤول', details: userError.message }, { status: 500 });
+            return NextResponse.json({ error: 'فشل في تسجيل بيانات رئيس الفريق', details: userError.message }, { status: 500 });
         }
 
         // Fetch the full team object to return all fields (titles, colors, etc.)

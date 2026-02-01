@@ -673,13 +673,13 @@ function HomeContent() {
                                             <div className="space-y-3">
                                                 <div className="flex items-center gap-2 text-xs font-bold text-primary bg-primary/10 px-3 py-2 rounded-xl">
                                                     <div className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center text-[10px]">2</div>
-                                                    بيانات المسؤول
+                                                    بيانات رئيس الفريق
                                                 </div>
                                                 <input
                                                     type="text"
                                                     required
                                                     className="w-full px-4 py-3.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-slate-800 placeholder:text-slate-400"
-                                                    placeholder="اسم المسؤول"
+                                                    placeholder="اسم رئيس الفريق"
                                                     value={adminName}
                                                     onChange={(e) => setAdminName(e.target.value)}
                                                 />
@@ -687,7 +687,7 @@ function HomeContent() {
                                                     type="email"
                                                     required
                                                     className="w-full px-4 py-3.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-slate-800 placeholder:text-slate-400"
-                                                    placeholder="البريد الإلكتروني للقيادة"
+                                                    placeholder="البريد الإلكتروني "
                                                     value={adminEmail}
                                                     onChange={(e) => setAdminEmail(e.target.value)}
                                                 />
@@ -695,7 +695,7 @@ function HomeContent() {
                                                     type="password"
                                                     required
                                                     className="w-full px-4 py-3.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-slate-800 placeholder:text-slate-400"
-                                                    placeholder="كلمة مرور الأدمن"
+                                                    placeholder="كلمة المرور"
                                                     value={adminPassword}
                                                     onChange={(e) => setAdminPassword(e.target.value)}
                                                 />
