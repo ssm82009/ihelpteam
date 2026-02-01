@@ -3,13 +3,15 @@ import { db } from '@/lib/db';
 import { sendEmail } from '@/lib/mail';
 
 const ADMIN_EMAIL = '56eeer@gmail.com';
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 
 export async function POST(request: Request) {
     try {
-        const { email } = await request.json();
+        const { username, password } = await request.json();
 
-        if (email !== ADMIN_EMAIL) {
-            return NextResponse.json({ error: 'غير مسموح لهذا البريد بالدخول' }, { status: 403 });
+        if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
+            return NextResponse.json({ error: 'اسم المستخدم أو كلمة المرور غير صحيحة' }, { status: 401 });
         }
 
         // Generate 6 digit code
@@ -19,7 +21,7 @@ export async function POST(request: Request) {
         // Save to DB
         await db.execute({
             sql: 'INSERT INTO verification_codes (email, code, expires_at) VALUES (?, ?, ?)',
-            args: [email, code, expiresAt.toISOString()],
+            args: [ADMIN_EMAIL, code, expiresAt.toISOString()],
         });
 
         // Send Email
@@ -35,12 +37,12 @@ export async function POST(request: Request) {
         `;
 
         await sendEmail({
-            to: email,
+            to: ADMIN_EMAIL,
             subject: 'كود التحقق الخاص بمشرف iHelp',
             html
         });
 
-        return NextResponse.json({ success: true, message: 'تم إرسال الكود بنجاح' });
+        return NextResponse.json({ success: true, message: 'تم إرسال الكود بنجاح', email: ADMIN_EMAIL });
     } catch (error) {
         console.error('Error in send-otp:', error);
         return NextResponse.json({ error: 'فشل في إرسال الكود' }, { status: 500 });

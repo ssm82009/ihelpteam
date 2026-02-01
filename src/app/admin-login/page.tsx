@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
 export default function AdminLogin() {
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [email, setEmail] = useState(''); // Captured after step 1
     const [code, setCode] = useState('');
-    const [step, setStep] = useState(1); // 1: Email, 2: OTP
+    const [step, setStep] = useState(1); // 1: User/Pass, 2: OTP
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
@@ -18,14 +20,15 @@ export default function AdminLogin() {
             const res = await fetch('/api/admin/auth/send-otp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email }),
+                body: JSON.stringify({ username, password }),
             });
             const data = await res.json();
             if (res.ok) {
-                toast.success('تم إرسال كود التحقق لبريدك');
+                toast.success('بيانات صحيحة. تم إرسال كود التحقق لبريدك الإداري');
+                setEmail(data.email);
                 setStep(2);
             } else {
-                toast.error(data.error || 'فشل في إرسال الكود');
+                toast.error(data.error || 'فشل تسجيل الدخول');
             }
         } catch (error) {
             toast.error('حدث خطأ غير متوقع');
@@ -66,28 +69,43 @@ export default function AdminLogin() {
                 </div>
 
                 {step === 1 ? (
-                    <form onSubmit={handleSendOTP} className="space-y-6">
+                    <form onSubmit={handleSendOTP} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">البريد الإلكتروني</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">اسم المستخدم</label>
                             <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                type="text"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-right"
-                                placeholder="example@gmail.com"
+                                placeholder="Admin"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">كلمة المرور</label>
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-right"
+                                placeholder="••••••••"
                                 required
                             />
                         </div>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-all disabled:opacity-50"
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-all disabled:opacity-50 mt-4"
                         >
-                            {loading ? 'جاري الإرسال...' : 'إرسال كود التحقق'}
+                            {loading ? 'جاري التحقق...' : 'دخول'}
                         </button>
                     </form>
                 ) : (
                     <form onSubmit={handleVerifyOTP} className="space-y-6">
+                        <div className="bg-blue-50 p-4 rounded-xl text-center">
+                            <p className="text-sm text-blue-700">تم إرسال كود التحقق إلى البريد الإلكتروني</p>
+                            <p className="text-xs text-blue-500 mt-1 dir-ltr">{email.replace(/^(.{2}).*(@.*)$/, "$1***$2")}</p>
+                        </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-2">كود التحقق</label>
                             <input
@@ -112,7 +130,7 @@ export default function AdminLogin() {
                             onClick={() => setStep(1)}
                             className="w-full text-slate-500 text-sm hover:underline"
                         >
-                            تغيير البريد الإلكتروني
+                            الرجوع لتسجيل الدخول
                         </button>
                     </form>
                 )}
