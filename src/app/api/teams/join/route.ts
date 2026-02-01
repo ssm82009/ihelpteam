@@ -44,6 +44,10 @@ export async function POST(request: Request) {
 
         const team = teamResult.rows[0];
 
+        if (team.is_locked) {
+            return NextResponse.json({ error: 'هذا الفريق خاص 🔒' }, { status: 403 });
+        }
+
         // 2. Check if user already exists in this team
         const userCheck = await db.execute({
             sql: 'SELECT * FROM users WHERE email = ? AND team_id = ?',

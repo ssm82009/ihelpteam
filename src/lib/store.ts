@@ -17,6 +17,7 @@ export interface Team {
     color_review?: string;
     color_completed?: string;
     color_notes?: string;
+    is_locked?: number | boolean;
 }
 
 export interface User {

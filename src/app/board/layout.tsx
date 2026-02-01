@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import Footer from '@/components/Footer';
-import { Shield, ChevronDown, Check, Layout, Plus, Star, CreditCard, Users, Palette, Sun, Moon, Copy, LogOut, Camera, User as UserIcon, Headset, Monitor, Leaf, Lock } from 'lucide-react';
+import { Shield, ChevronDown, Check, Layout, Plus, Star, CreditCard, Users, Palette, Sun, Moon, Copy, LogOut, Camera, User as UserIcon, Headset, Monitor, Leaf, Lock, Unlock } from 'lucide-react';
 import MemberModal from '@/components/Board/MemberModal';
 import SubscriptionModal from '@/components/Board/SubscriptionModal';
 import CreateTeamModal from '@/components/Board/CreateTeamModal';
@@ -178,6 +178,27 @@ export default function BoardLayout({
         }
     }, [team, currentUser, router, hydrated]);
 
+    const toggleTeamLock = async () => {
+        if (!team || !currentUser || team.admin_id !== currentUser.id) return;
+        const newLockState = !team.is_locked;
+
+        // Optimistic update
+        setTeam({ ...team, is_locked: newLockState ? 1 : 0 });
+
+        try {
+            const res = await fetch('/api/teams/toggle-lock', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ team_id: team.id, is_locked: newLockState, user_id: currentUser.id })
+            });
+            if (!res.ok) throw new Error();
+            toast.success(newLockState ? 'تم قفل الفريق 🔒' : 'تم فتح الفريق 🔓');
+        } catch (error) {
+            setTeam({ ...team, is_locked: !newLockState ? 1 : 0 }); // Revert
+            toast.error('فشل تحديث حالة القفل');
+        }
+    };
+
     const copyTeamCode = () => {
         if (!team?.secret_code) return;
         navigator.clipboard.writeText(team.secret_code);
@@ -349,7 +370,30 @@ export default function BoardLayout({
                                         ))}
                                     </div>
 
-                                    <div className="mt-3 pt-3 border-t border-border/50 px-3 space-y-2">
+                                    {team.admin_id === currentUser.id && (
+                                        <div className="mt-2 pt-2 border-t border-border/50 px-3">
+                                            <button
+                                                onClick={() => {
+                                                    toggleTeamLock();
+                                                    // setIsTeamMenuOpen(false); // Keep open to see the change? Or close. Let's keep it open or close based on preference. Maybe keep open.
+                                                }}
+                                                className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all font-black text-xs border ${team.is_locked ? 'bg-amber-50 text-amber-700 border-amber-100 hover:bg-amber-100' : 'bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-100'}`}
+                                            >
+                                                <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${team.is_locked ? 'bg-amber-200/50' : 'bg-white shadow-sm'}`}>
+                                                    {team.is_locked ? <Lock size={18} /> : <Unlock size={18} />}
+                                                </div>
+                                                <div className="flex-1 text-right">
+                                                    <div className="text-sm">{team.is_locked ? 'الفريق مقفل' : 'الفريق مفتوح'}</div>
+                                                    <div className="text-[9px] opacity-70 font-normal leading-tight mt-0.5">{team.is_locked ? 'لا يمكن لأحد الانضمام حالياً' : 'مسموح بالانضمام عبر الكود'}</div>
+                                                </div>
+                                                <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${team.is_locked ? 'bg-amber-500' : 'bg-slate-300'}`}>
+                                                    <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${team.is_locked ? '-translate-x-5' : '-translate-x-1'}`} />
+                                                </div>
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    <div className="mt-2 pt-2 border-t border-border/50 px-3 space-y-2">
                                         <button
                                             onClick={() => {
                                                 setIsJoinTeamOpen(true);
